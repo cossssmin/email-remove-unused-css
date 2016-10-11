@@ -1,0 +1,31 @@
+{
+  "name": "email-remove-unused-css",
+  "version": "1.0.0",
+  "description": "remove unused styles in head and/or unused classes within body",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/code-and-send/email-remove-unused-css.git"
+  },
+  "author": {
+    "name": "Roy Reveltas",
+    "email": "roy@codeandsend.com",
+    "url": "https://github.com/revelt"
+  },
+  "keywords": [
+    "💪",
+    "email",
+    "remove",
+    "unused",
+    "css",
+    "head",
+    "styles",
+    "body",
+    "uncss",
+    "unclassify"
+  ],
+  "dependencies": {
+    "posthtml-parser": "^0.2.0"
+  },
+  "devDependencies": {}
+}

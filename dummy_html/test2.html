@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dummy HTML No.1</title>
+  <style type="text/css">
+    .d-w1{ width:1px !important;} /* should be removed */
+    .d-w2{ width:2px !important;} /* should be removed */
+    .d-w3{ width:3px !important;} /* should be removed */
+    .d-w4{ width:4px !important;} /* should be removed */
+    .d-w100p{ width:100% !important;}
+    @media only screen and (max-width: 660px){
+      .w1{ width:1px !important;}
+      .w2{ width:2px !important;} /* should be removed */
+    }
+  </style>
+</head>
+<body>
+  <table width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="d-w100p  w1  remove-me  remove-me-too">
+            Dummy content.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
