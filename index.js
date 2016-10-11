@@ -81,35 +81,39 @@ function getTag (objOrArr, tagName, findingsArray) {
 
 // returns true if input is not (null or undefined)
 // notice loose equal:
-function existy(x) { return x != null };
-
-// =========
-
-// returns
-function truthy(x) { return (x !== false) && existy(x) };
+function existy (x) { return x != null };
+// returns true on all truthy things:
+function truthy (x) { return (x !== false) && existy(x) };
 
 // =========
 
 /**
- * getAllSelectors - compiles a list of all selectors, currently present in the given AST (object)
+ * getAllValuesByKey - query a key, get an array of values of all that key instances
  *
  * @param  {Object|Array|String} input AST tree, in object shape (or something else if called recursively)
+ * @param  {String} input the name of the key to find. We'll put its value into results array
  * @return {Array|null}  output   Null or Array of all selectors
  */
-function getAllSelectors (input, foundSelectorsArr) {
-  foundSelectorsArr = foundSelectorsArr || []
+function getAllValuesByKey (input, whatToFind, foundArr) {
+  foundArr = foundArr || []
   if (isObject(input)) {
     // firstly, check does it have key named "selectors"
-    if (existy(input.selectors)) {
-      input.selectors.forEach(function (elem) {
-        foundSelectorsArr.push(elem)
-      })
+    if (existy(input[whatToFind])) {
+      // if can be straight text or array
+      if (Array.isArray(input[whatToFind])) {
+        input[whatToFind].forEach(function (elem) {
+          foundArr.push(elem)
+        })
+      } else {
+        // must be String then:
+        foundArr.push(input[whatToFind])
+      }
     }
     // secondly, iterate all keys for deeper content
     Object.keys(input).forEach(function (el) {
       // if stumbled on value which is Array
       if (Array.isArray(input[el]) || isObject(input[el])) {
-        getAllSelectors(input[el], foundSelectorsArr)
+        getAllValuesByKey(input[el], whatToFind, foundArr)
       }
     })
   }
@@ -117,11 +121,11 @@ function getAllSelectors (input, foundSelectorsArr) {
   if (Array.isArray(input)) {
     input.forEach(function (el) {
       if (isObject(el)) {
-        getAllSelectors(el, foundSelectorsArr)
+        getAllValuesByKey(el, whatToFind, foundArr)
       }
     })
   }
-  return foundSelectorsArr
+  return foundArr
 }
 
 // =========
@@ -150,20 +154,28 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   var step_two = parser(step_one)
   var step_three = getTag(step_two, 'style')
   // var step_four = css.parse(step_three[0].content[0])
-  // var step_five = getAllSelectors(step_four)
-  console.log('\n\n')
-  console.log('css.parse(step_three[0].content[0]) = ' + JSON.stringify(css.parse(step_three[0].content[0]), null, 4))
-  console.log('\n\n')
+  // var step_five = getAllValuesByKey(step_four)
   var step_five = []
+  // Note to self. CSS Parser will have all selectors under keys "selectors"
   step_three.forEach(function (el, i) {
-    step_five = step_five.concat(getAllSelectors(css.parse(step_three[i].content[0])))
+    step_five = step_five.concat(getAllValuesByKey(css.parse(step_three[i].content[0]), 'selectors'))
   })
-  console.log('all selectors from <style> tags: ' + JSON.stringify(step_five, null, 4))
+  console.log('\n\n===============\nall selectors from <style> tags: ' + JSON.stringify(step_five, null, 4) + '\n===============\n\n')
   //
   // PART II. Get all inline styles from BODY
   //
-  console.log('step_two = ' + JSON.stringify(step_two, null, 4))
-  // var step_six
+  // Note to self. HTML Parser will have all class attributes under keys "class"
+  // step_six is array of strings, each is {value} from class="{value}"
+  var step_six = getAllValuesByKey(step_two, 'class')
+  var step_seven = []
+  step_six.forEach(function (el) {
+    el.split(' ').forEach(function (el) {
+      if (el !== '') {
+        step_seven.push(el)
+      }
+    })
+  })
+  console.log('all classes within BODY = ' + JSON.stringify(step_seven, null, 4))
   //
   // PART III.
   //
