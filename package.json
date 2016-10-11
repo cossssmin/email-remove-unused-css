@@ -25,6 +25,7 @@
     "unclassify"
   ],
   "dependencies": {
+    "css": "^2.2.1",
     "posthtml-parser": "^0.2.0"
   },
   "devDependencies": {}

@@ -5,6 +5,7 @@
 
 var fs = require('fs')
 var parser = require('posthtml-parser')
+var css = require('css')
 
 // ===================================
 // F U N C T I O N S
@@ -78,6 +79,53 @@ function getTag (objOrArr, tagName, findingsArray) {
 
 // =========
 
+// returns true if input is not (null or undefined)
+// notice loose equal:
+function existy(x) { return x != null };
+
+// =========
+
+// returns
+function truthy(x) { return (x !== false) && existy(x) };
+
+// =========
+
+/**
+ * getAllSelectors - compiles a list of all selectors, currently present in the given AST (object)
+ *
+ * @param  {Object|Array|String} input AST tree, in object shape (or something else if called recursively)
+ * @return {Array|null}  output   Null or Array of all selectors
+ */
+function getAllSelectors (input, foundSelectorsArr) {
+  foundSelectorsArr = foundSelectorsArr || []
+  if (isObject(input)) {
+    // firstly, check does it have key named "selectors"
+    if (existy(input.selectors)) {
+      input.selectors.forEach(function (elem) {
+        foundSelectorsArr.push(elem)
+      })
+    }
+    // secondly, iterate all keys for deeper content
+    Object.keys(input).forEach(function (el) {
+      // if stumbled on value which is Array
+      if (Array.isArray(input[el]) || isObject(input[el])) {
+        getAllSelectors(input[el], foundSelectorsArr)
+      }
+    })
+  }
+  // if array is passed, iterate each elem, check if it's Obj, call itself recursively
+  if (Array.isArray(input)) {
+    input.forEach(function (el) {
+      if (isObject(el)) {
+        getAllSelectors(el, foundSelectorsArr)
+      }
+    })
+  }
+  return foundSelectorsArr
+}
+
+// =========
+
 /**
  * emailRemoveUnusedCss - the main function
  * Purpose: for use in email newsletter development to clean email templates
@@ -95,8 +143,14 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
 // A C T I O N
 
 (function () {
-  var step_one = fs.readFileSync('./dummy_html/test1.html').toString()
+  var step_one = fs.readFileSync('./dummy_html/test2.html').toString()
   var step_two = parser(step_one)
   var step_three = getTag(step_two, 'style')
-  console.log('step_three = ' + JSON.stringify(step_three, null, 4))
+  // var step_four = css.parse(step_three[0].content[0])
+  // var step_five = getAllSelectors(step_four)
+  var step_five = []
+  step_three.forEach(function (el, i) {
+    step_five = step_five.concat(getAllSelectors(css.parse(step_three[i].content[0])))
+  })
+  console.log('all selectors:\nstep_five = ' + JSON.stringify(step_five, null, 4))
 })()
