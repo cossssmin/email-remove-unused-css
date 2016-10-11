@@ -143,14 +143,28 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
 // A C T I O N
 
 (function () {
-  var step_one = fs.readFileSync('./dummy_html/test2.html').toString()
+  //
+  // PART I. Get all styles from HEAD
+  //
+  var step_one = fs.readFileSync('./dummy_html/test1.html').toString()
   var step_two = parser(step_one)
   var step_three = getTag(step_two, 'style')
   // var step_four = css.parse(step_three[0].content[0])
   // var step_five = getAllSelectors(step_four)
+  console.log('\n\n')
+  console.log('css.parse(step_three[0].content[0]) = ' + JSON.stringify(css.parse(step_three[0].content[0]), null, 4))
+  console.log('\n\n')
   var step_five = []
   step_three.forEach(function (el, i) {
     step_five = step_five.concat(getAllSelectors(css.parse(step_three[i].content[0])))
   })
-  console.log('all selectors:\nstep_five = ' + JSON.stringify(step_five, null, 4))
+  console.log('all selectors from <style> tags: ' + JSON.stringify(step_five, null, 4))
+  //
+  // PART II. Get all inline styles from BODY
+  //
+  console.log('step_two = ' + JSON.stringify(step_two, null, 4))
+  // var step_six
+  //
+  // PART III.
+  //
 })()
