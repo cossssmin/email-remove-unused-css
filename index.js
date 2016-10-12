@@ -32,13 +32,14 @@ function isObject (item) {
  * If it exists, it will return "content". Same with "attrs", if found at the
  * same level, it's contents will be returned.
  *
- * @param  {Object|Array} objOrArr pass in the PostHTML AST (normally an array).
+ * @param  {Object} objOrArr pass in the PostHTML AST (normally an array).
  * @param  {String} tagName  name of the tag (which is a key value in an object)
+ * @param  {String} replacementContents  OPTIONAL array of values to replace findings with - can be a single String or Object (then all findings will be replaced with it)
  * @return {Object|null}          two keys: 'attrs' and 'content', each if found
  */
-function findTag (objOrArr, tagName, findingsArray) {
+function findTag (objOrArr, tagName, replacementContents, result) {
   var tempObj = {}
-  findingsArray = findingsArray || []
+  result = result || []
   if (tagName === null || tagName === undefined || tagName === '' || typeof tagName !== 'string') {
     return null
   }
@@ -49,21 +50,33 @@ function findTag (objOrArr, tagName, findingsArray) {
       // console.log('objOrArr[' + el + ']=' + JSON.stringify(objOrArr[el], null, 4))
       if (objOrArr[el] === tagName) {
         // console.log('FOUND ' + tagName + '!')
-        tempObj = {}
-        tempObj['tag'] = tagName
-        if (objOrArr['attrs']) {
-          tempObj['attrs'] = objOrArr['attrs']
+        // -- if replacement is passed, replace:
+        if (truthy(replacementContents)) {
+          // if replacement is an array:
+          if (_.isArray(replacementContents)) {
+            if (existy(replacementContents[0])) {
+              objOrArr['content'] = replacementContents[0]
+              replacementContents.shift()
+            }
+          } else {
+          // if replacement is single thing:
+            objOrArr['content'] = replacementContents
+          }
+        } else {
+        // -- it's not replcement, so prepare the return array:
+          tempObj = {}
+          tempObj['tag'] = tagName
+          if (objOrArr['attrs']) {
+            tempObj['attrs'] = objOrArr['attrs']
+          }
+          if (objOrArr['content']) {
+            tempObj['content'] = objOrArr['content']
+          }
+          result.push(tempObj)
         }
-        if (objOrArr['content']) {
-          tempObj['content'] = objOrArr['content']
-        }
-        // console.log('tempObj = ' + JSON.stringify(tempObj, null, 4))
-        // console.log('objOrArr[attrs] = ' + JSON.stringify(objOrArr['attrs'], null, 4))
-        // console.log('objOrArr[content] = ' + JSON.stringify(objOrArr['content'], null, 4))
-        findingsArray.push(tempObj)
       }
       if (Array.isArray(objOrArr[el])) {
-        findTag(objOrArr[el], tagName, findingsArray)
+        findTag(objOrArr[el], tagName, replacementContents, result)
       }
     })
   } else if (Array.isArray(objOrArr)) {
@@ -71,11 +84,15 @@ function findTag (objOrArr, tagName, findingsArray) {
     objOrArr.forEach(function (el, i) {
       // console.log('array el[' + i + ']=' + JSON.stringify(el, null, 4))
       if (isObject(el)) {
-        findTag(el, tagName, findingsArray)
+        findTag(el, tagName, replacementContents, result)
       }
     })
   }
-  return findingsArray
+  if (truthy(replacementContents)) {
+    return objOrArr
+  } else {
+    return result
+  }
 }
 
 // =========
@@ -110,8 +127,6 @@ function getAllValuesByKey (input, whatToFind, replacement, result) {
         // -- if replacement is a string:
         if (_.isString(replacement)) {
           input[whatToFind] = replacement
-          replacement = null
-          // replacement = undefined
         } else if (_.isArray(replacement)) {
         // -- if replacement is array:
           // --- use the first value in replacement[] array:
@@ -125,7 +140,7 @@ function getAllValuesByKey (input, whatToFind, replacement, result) {
         }
       } else {
       // - otherwise, prepare the return array:
-      // if can be straight text or array
+      // it can be straight text or array
         if (Array.isArray(input[whatToFind])) {
           input[whatToFind].forEach(function (elem) {
             result.push(elem)
@@ -208,7 +223,7 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // PART I. Get all styles from within <head>
   //
 
-  var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
+  var rawParsedHtml = fs.readFileSync('./dummy_html/test3.html').toString()
   var htmlAstObj = parser(rawParsedHtml)
   // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
   var step_three = findTag(htmlAstObj, 'style')
@@ -261,7 +276,10 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // PART IV. Delete classes from <head>
   //
 
-  console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4) + '\n\n\n\n\n\n')
+  // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4) + '\n\n\n\n\n\n')
+  console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  var testTagReplacement = findTag(htmlAstObj, 'html', [['yo1'], ['yo2']])
+  console.log('testTagReplacement = ' + JSON.stringify(testTagReplacement, null, 4))
 
   // we already have step_three, which is all <style> tags.
 })()
