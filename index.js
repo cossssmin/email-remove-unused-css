@@ -223,11 +223,11 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // PART I. Get all styles from within <head>
   //
 
-  var rawParsedHtml = fs.readFileSync('./dummy_html/test3.html').toString()
+  var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
   var htmlAstObj = parser(rawParsedHtml)
   // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
   var step_three = findTag(htmlAstObj, 'style')
-  console.log('step_three = ' + JSON.stringify(step_three, null, 4))
+  // console.log('step_three = ' + JSON.stringify(step_three, null, 4))
   // var step_four = css.parse(step_three[0].content[0])
   // var allStyleTagSelectors = getAllValuesByKey(step_four)
   var allStyleTagSelectors = []
@@ -276,12 +276,21 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // PART IV. Delete classes from <head>
   //
 
-  // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4) + '\n\n\n\n\n\n')
-  console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
-  var testTagReplacement = findTag(htmlAstObj, 'html', [['yo1'], ['yo2']])
-  console.log('testTagReplacement = ' + JSON.stringify(testTagReplacement, null, 4))
+  // var testTagReplacement = findTag(htmlAstObj, 'html', [['yo1'], ['yo2']])
+  // console.log('testTagReplacement = ' + JSON.stringify(testTagReplacement, null, 4))
 
   // we already have step_three, which is all <style> tags.
+  // First, prep step_three, :
+  step_three.forEach(function (el, i) {
+    console.log('el.content[0] = ' + JSON.stringify(el.content[0], null, 4))
+    var nn = css.parse(el.content[0])
+    console.log('nn = ' + JSON.stringify(nn, null, 4))
+    // --
+    var oo = getAllValuesByKey(css.parse(el.content[0]), 'selectors', [['.d-w1'], []])
+    console.log('oo = ' + JSON.stringify(oo, null, 4) + '\n=====================================\n=====================================\n')
+    // --
+
+  })
 })()
 // ========================================
 // css parser: https://github.com/reworkcss/css
