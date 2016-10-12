@@ -2,19 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <style>.d-w1{ width:1px !important;} /* should be removed */</style>
+  <style>
+  .d-w1{
+    width: 1px !important;
+  }
+  #some-id{
+    display: block;
+  }
+  </style>
   <title>Dummy HTML No.1</title>
   <style type="text/css">
-    .yo{ width:2px !important;} /* should be removed */
+    .yo {
+      width:2px !important;
+    }
+    .yo {
+      width:2px !important;
+    }
+    #another-id{
+      display: inline;
+    }
   </style>
 </head>
-<body>
+<body id="certain-id-1">
   <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td>
       <table class="d-w1 d-w2 d-w3  whatever" width="100%" border="0" cellpadding="0" cellspacing="0">
         <tr>
-          <td class="d-w100p  w1  remove-me  remove-me-too">
+          <td class="d-w1 d-w100p  w1  remove-me  remove-me-too" id="certain-id-2">
             Dummy content.
           </td>
         </tr>

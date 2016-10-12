@@ -6,6 +6,7 @@
 var fs = require('fs')
 var parser = require('posthtml-parser')
 var css = require('css')
+var _ = require('lodash')
 
 // ===================================
 // F U N C T I O N S
@@ -83,7 +84,7 @@ function getTag (objOrArr, tagName, findingsArray) {
 // notice loose equal:
 function existy (x) { return x != null };
 // returns true on all truthy things:
-function truthy (x) { return (x !== false) && existy(x) };
+// function truthy (x) { return (x !== false) && existy(x) };
 
 // =========
 
@@ -131,6 +132,29 @@ function getAllValuesByKey (input, whatToFind, foundArr) {
 // =========
 
 /**
+ * sortClassesFromArrays - reads array of selectors like
+ * ['.class2', '.id1', .class2, '.id2']
+ * and separates classes from ids, returning array of each
+ *
+ * @param  {Array} arrayIn array of class, id or nonsense selectors
+ * @return {Array}         array of two arrays: classes and id's
+ */
+function sortClassesFromArrays (arrayIn) {
+  var classArrOut = []
+  var idArrOut = []
+  arrayIn.forEach(function (el, i) {
+    if (el[0] === '.') {
+      classArrOut.push(el.slice(1))
+    } else if (el[0] === '#') {
+      idArrOut.push(el.slice(1))
+    }
+  })
+  return [classArrOut, idArrOut]
+}
+
+// =========
+
+/**
  * emailRemoveUnusedCss - the main function
  * Purpose: for use in email newsletter development to clean email templates
  * Removes unused CSS from HEAD and unused CSS from BODY
@@ -150,33 +174,62 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   //
   // PART I. Get all styles from HEAD
   //
-  var step_one = fs.readFileSync('./dummy_html/test1.html').toString()
-  var step_two = parser(step_one)
-  var step_three = getTag(step_two, 'style')
+
+  var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
+  var htmlAstObj = parser(rawParsedHtml)
+  console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  var step_three = getTag(htmlAstObj, 'style')
   // var step_four = css.parse(step_three[0].content[0])
-  // var step_five = getAllValuesByKey(step_four)
-  var step_five = []
+  // var allStyleTagSelectors = getAllValuesByKey(step_four)
+  var allStyleTagSelectors = []
   // Note to self. CSS Parser will have all selectors under keys "selectors"
   step_three.forEach(function (el, i) {
-    step_five = step_five.concat(getAllValuesByKey(css.parse(step_three[i].content[0]), 'selectors'))
+    allStyleTagSelectors = allStyleTagSelectors.concat(getAllValuesByKey(css.parse(step_three[i].content[0]), 'selectors'))
   })
-  console.log('\n\n===============\nall selectors from <style> tags: ' + JSON.stringify(step_five, null, 4) + '\n===============\n\n')
+  // dedupe:
+  allStyleTagSelectors = _.uniq(allStyleTagSelectors)
+  var allClassSelectors = sortClassesFromArrays(allStyleTagSelectors)[0]
+  var allIdSelectors = sortClassesFromArrays(allStyleTagSelectors)[1]
+  // console.log('\n\n===============\nall selectors from <style> tags: ' + JSON.stringify(allStyleTagSelectors, null, 4) + '\n===============\n\n')
+  // console.log('all classes from style tags: ' + JSON.stringify(allClassSelectors, null, 4))
+  // console.log('all id\'s from style tags: ' + JSON.stringify(allIdSelectors, null, 4))
+
   //
   // PART II. Get all inline styles from BODY
   //
+
   // Note to self. HTML Parser will have all class attributes under keys "class"
   // step_six is array of strings, each is {value} from class="{value}"
-  var step_six = getAllValuesByKey(step_two, 'class')
-  var step_seven = []
+  var step_six = getAllValuesByKey(htmlAstObj, 'class')
+  var allClassesWithinBody = []
   step_six.forEach(function (el) {
     el.split(' ').forEach(function (el) {
       if (el !== '') {
-        step_seven.push(el)
+        allClassesWithinBody.push(el)
       }
     })
   })
-  console.log('all classes within BODY = ' + JSON.stringify(step_seven, null, 4))
+  allClassesWithinBody = _.uniq(allClassesWithinBody)
+  // console.log('all classes within BODY = ' + JSON.stringify(allClassesWithinBody, null, 4))
+
   //
   // PART III.
   //
+
+  var headCssToDelete = _.clone(allClassSelectors)
+  _.pullAll(headCssToDelete, allClassesWithinBody)
+  // console.log('\n==================\n\nheadCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4))
+
+  var bodyCssToDelete = _.clone(allClassesWithinBody)
+  _.pullAll(bodyCssToDelete, allClassSelectors)
+  // console.log('bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4))
 })()
+
+  //
+  // PART IV.
+  //
+
+  //
+
+// ========================================
+// css parser: https://github.com/reworkcss/css
