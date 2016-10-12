@@ -24,7 +24,7 @@ function isObject (item) {
 // =========
 
 /**
- * getTag - This is a walker-function for fealing with PostHTML-parsed AST.
+ * findTag - This is a walker-function for fealing with PostHTML-parsed AST.
  * Pass array or object and a tag name.
  * It will recursively walk the incoming "objOrArr" until it will find an
  * object with a key "tag" and a value "tagName" (incoming var).
@@ -36,7 +36,7 @@ function isObject (item) {
  * @param  {String} tagName  name of the tag (which is a key value in an object)
  * @return {Object|null}          two keys: 'attrs' and 'content', each if found
  */
-function getTag (objOrArr, tagName, findingsArray) {
+function findTag (objOrArr, tagName, findingsArray) {
   var tempObj = {}
   findingsArray = findingsArray || []
   if (tagName === null || tagName === undefined || tagName === '' || typeof tagName !== 'string') {
@@ -63,15 +63,15 @@ function getTag (objOrArr, tagName, findingsArray) {
         findingsArray.push(tempObj)
       }
       if (Array.isArray(objOrArr[el])) {
-        getTag(objOrArr[el], tagName, findingsArray)
+        findTag(objOrArr[el], tagName, findingsArray)
       }
     })
   } else if (Array.isArray(objOrArr)) {
-    // else, it's an array. Iterate each key, if it's an obj, call getTag()
+    // else, it's an array. Iterate each key, if it's an obj, call findTag()
     objOrArr.forEach(function (el, i) {
       // console.log('array el[' + i + ']=' + JSON.stringify(el, null, 4))
       if (isObject(el)) {
-        getTag(el, tagName, findingsArray)
+        findTag(el, tagName, findingsArray)
       }
     })
   }
@@ -84,37 +84,66 @@ function getTag (objOrArr, tagName, findingsArray) {
 // notice loose equal:
 function existy (x) { return x != null };
 // returns true on all truthy things:
-// function truthy (x) { return (x !== false) && existy(x) };
+function truthy (x) { return (x !== false) && existy(x) };
 
 // =========
 
 /**
  * getAllValuesByKey - query a key, get an array of values of all that key instances
  *
- * @param  {Object|Array|String} input AST tree, in object shape (or something else if called recursively)
- * @param  {String} input the name of the key to find. We'll put its value into results array
+ * @param  {Whatever} input - AST tree object or Array or String (if called recursively)
+ * @param  {String} whatToFind - the name of the key to find. We'll put its value into results array
+ * @param  {Array} replacement (optional) - what to replace all found values with
+ * @param  {Array} result - INNER VARIABLE - to retain values when called recursively
  * @return {Array|null}  output   Null or Array of all selectors
  */
-function getAllValuesByKey (input, whatToFind, foundArr) {
-  foundArr = foundArr || []
+function getAllValuesByKey (input, whatToFind, replacement, result) {
+  result = result || []
+  if (typeof whatToFind !== 'string') {
+    whatToFind = String(whatToFind)
+  }
   if (isObject(input)) {
-    // firstly, check does it have key named "selectors"
+    // firstly, check does it have key named {whatToFind}, for example "selectors"
     if (existy(input[whatToFind])) {
-      // if can be straight text or array
-      if (Array.isArray(input[whatToFind])) {
-        input[whatToFind].forEach(function (elem) {
-          foundArr.push(elem)
-        })
+      // - if replacement is sent, replace:
+      if (truthy(replacement)) {
+        // -- if replacement is a string:
+        if (_.isString(replacement)) {
+          input[whatToFind] = replacement
+          replacement = null
+          // replacement = undefined
+        } else if (_.isArray(replacement)) {
+        // -- if replacement is array:
+          // --- use the first value in replacement[] array:
+          if (existy(replacement[0])) {
+            input[whatToFind] = replacement[0]
+          }
+          // --- remove the first element from the replacement array:
+          replacement.shift()
+        } else {
+          throw new Error('Replacement is not recognised!')
+        }
       } else {
-        // must be String then:
-        foundArr.push(input[whatToFind])
+      // - otherwise, prepare the return array:
+      // if can be straight text or array
+        if (Array.isArray(input[whatToFind])) {
+          input[whatToFind].forEach(function (elem) {
+            result.push(elem)
+          })
+        } else {
+          // must be String then:
+          result.push(input[whatToFind])
+        }
       }
     }
     // secondly, iterate all keys for deeper content
     Object.keys(input).forEach(function (el) {
       // if stumbled on value which is Array
       if (Array.isArray(input[el]) || isObject(input[el])) {
-        getAllValuesByKey(input[el], whatToFind, foundArr)
+        // if replacement mode, pass result as incoming object!
+
+        // else, pass original input object
+        getAllValuesByKey(input[el], whatToFind, replacement, result)
       }
     })
   }
@@ -122,11 +151,15 @@ function getAllValuesByKey (input, whatToFind, foundArr) {
   if (Array.isArray(input)) {
     input.forEach(function (el) {
       if (isObject(el)) {
-        getAllValuesByKey(el, whatToFind, foundArr)
+        getAllValuesByKey(el, whatToFind, replacement, result)
       }
     })
   }
-  return foundArr
+  if (truthy(replacement)) {
+    return input
+  } else {
+    return result
+  }
 }
 
 // =========
@@ -157,7 +190,7 @@ function sortClassesFromArrays (arrayIn) {
 /**
  * emailRemoveUnusedCss - the main function
  * Purpose: for use in email newsletter development to clean email templates
- * Removes unused CSS from HEAD and unused CSS from BODY
+ * Removes unused CSS from <head> and unused CSS from BODY
  *
  * @param  {String} htmlContentsAsString incoming HTML as (UTF-8) string
  * @return {String}                      cleaned HTML as (UTF-8) string
@@ -172,13 +205,14 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
 
 (function () {
   //
-  // PART I. Get all styles from HEAD
+  // PART I. Get all styles from within <head>
   //
 
   var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
   var htmlAstObj = parser(rawParsedHtml)
-  console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
-  var step_three = getTag(htmlAstObj, 'style')
+  // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  var step_three = findTag(htmlAstObj, 'style')
+  console.log('step_three = ' + JSON.stringify(step_three, null, 4))
   // var step_four = css.parse(step_three[0].content[0])
   // var allStyleTagSelectors = getAllValuesByKey(step_four)
   var allStyleTagSelectors = []
@@ -188,48 +222,48 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   })
   // dedupe:
   allStyleTagSelectors = _.uniq(allStyleTagSelectors)
-  var allClassSelectors = sortClassesFromArrays(allStyleTagSelectors)[0]
+  var allClassesWithinHead = sortClassesFromArrays(allStyleTagSelectors)[0]
   var allIdSelectors = sortClassesFromArrays(allStyleTagSelectors)[1]
   // console.log('\n\n===============\nall selectors from <style> tags: ' + JSON.stringify(allStyleTagSelectors, null, 4) + '\n===============\n\n')
-  // console.log('all classes from style tags: ' + JSON.stringify(allClassSelectors, null, 4))
+  // console.log('all classes from style tags: ' + JSON.stringify(allClassesWithinHead, null, 4))
   // console.log('all id\'s from style tags: ' + JSON.stringify(allIdSelectors, null, 4))
 
   //
-  // PART II. Get all inline styles from BODY
+  // PART II. Get all inline styles from within <body>
   //
 
   // Note to self. HTML Parser will have all class attributes under keys "class"
-  // step_six is array of strings, each is {value} from class="{value}"
-  var step_six = getAllValuesByKey(htmlAstObj, 'class')
-  var allClassesWithinBody = []
-  step_six.forEach(function (el) {
+  // allClassesWithinBodyRawContentsArray is array of strings, each is {value} from class="{value}"
+  var allClassesWithinBodyRawContentsArray = getAllValuesByKey(htmlAstObj, 'class')
+  var allClassesWithinBodySplitArray = []
+  allClassesWithinBodyRawContentsArray.forEach(function (el) {
     el.split(' ').forEach(function (el) {
       if (el !== '') {
-        allClassesWithinBody.push(el)
+        allClassesWithinBodySplitArray.push(el)
       }
     })
   })
-  allClassesWithinBody = _.uniq(allClassesWithinBody)
-  // console.log('all classes within BODY = ' + JSON.stringify(allClassesWithinBody, null, 4))
+  allClassesWithinBodySplitArray = _.uniq(allClassesWithinBodySplitArray)
 
   //
-  // PART III.
+  // PART III. Compile to-be-deleted class names, within <body> and within <head>
   //
 
-  var headCssToDelete = _.clone(allClassSelectors)
-  _.pullAll(headCssToDelete, allClassesWithinBody)
-  // console.log('\n==================\n\nheadCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4))
+  var headCssToDelete = _.clone(allClassesWithinHead)
+  _.pullAll(headCssToDelete, allClassesWithinBodySplitArray)
+  console.log('\n==================\n\nheadCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4))
 
-  var bodyCssToDelete = _.clone(allClassesWithinBody)
-  _.pullAll(bodyCssToDelete, allClassSelectors)
-  // console.log('bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4))
+  var bodyCssToDelete = _.clone(allClassesWithinBodySplitArray)
+  _.pullAll(bodyCssToDelete, allClassesWithinHead)
+  console.log('bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4))
+
+  //
+  // PART IV. Delete classes from <head>
+  //
+
+  console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4) + '\n\n\n\n\n\n')
+
+  // we already have step_three, which is all <style> tags.
 })()
-
-  //
-  // PART IV.
-  //
-
-  //
-
 // ========================================
 // css parser: https://github.com/reworkcss/css
