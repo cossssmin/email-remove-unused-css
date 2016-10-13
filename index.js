@@ -8,8 +8,22 @@ var parser = require('posthtml-parser')
 var css = require('css')
 var _ = require('lodash')
 
+var whitelist = [
+  'ExternalClass',
+  'ReadMsgBody',
+  'yshortcuts',
+  'maxwidth-apple-mail-fix',
+  'module-'
+]
+
 // ===================================
 // F U N C T I O N S
+
+function aContainsB (a, b) {
+  return a.indexOf(b) >= 0
+}
+
+// =========
 
 /**
  * isObject - detects is it a true object or not
@@ -363,10 +377,12 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
 
   var headCssToDelete = _.clone(allClassesWithinHead)
   _.pullAll(headCssToDelete, allClassesWithinBodySplitArray)
+  // TODO: remove whitelist smartly, depending does it have asterisk or not
   console.log('\n==================\n\nheadCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4))
 
   var bodyCssToDelete = _.clone(allClassesWithinBodySplitArray)
   _.pullAll(bodyCssToDelete, allClassesWithinHead)
+  // TODO: remove whitelist smartly, depending does it have asterisk or not
   console.log('bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4))
 
   //
