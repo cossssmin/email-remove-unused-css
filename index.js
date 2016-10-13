@@ -190,13 +190,36 @@ function getAllValuesByKey (input, whatToFind, replacement, result) {
  * @return {Array}         array of two arrays: classes and id's
  */
 function sortClassesFromArrays (arrayIn) {
+
+  function chopOffUpToDot (str) {
+    return _.replace(str, /[^.]*[.]/g, '')
+  }
+
+  function chopOffUpToHash (str) {
+    return _.replace(str, /[^#]*[#]/g, '')
+  }
+
+  function chopOffTheRest (str) {
+    return _.replace(str, /[ :>.#+~\[\]].*/g, '')
+  }
+
   var classArrOut = []
   var idArrOut = []
+  var temp
   arrayIn.forEach(function (el, i) {
-    if (el[0] === '.') {
-      classArrOut.push(el.slice(1))
-    } else if (el[0] === '#') {
-      idArrOut.push(el.slice(1))
+    if ((el.indexOf('#') !== -1) && (el[1] !== undefined)) {
+      temp = chopOffUpToHash(el)
+      temp = chopOffTheRest(temp)
+      if (temp.length > 0) {
+        idArrOut.push(temp)
+      }
+    }
+    if ((el.indexOf('.') !== -1) && (el[1] !== undefined)) {
+      temp = chopOffUpToDot(el)
+      temp = chopOffTheRest(temp)
+      if (temp.length > 0) {
+        classArrOut.push(temp)
+      }
     }
   })
   return [classArrOut, idArrOut]
@@ -231,12 +254,12 @@ function deleteRulesWithNoSelectors (obj) {
     // console.log('\n************\n************\n************\n************\nel = ' + JSON.stringify(el, null, 4))
     // console.log('el.selectors = ' + JSON.stringify(el.selectors, null, 4))
     // console.log('* ' + el.selectors.length)
-    if (el.selectors.length > 0) {
+    if (existy(el.selectors) && el.selectors.length > 0) {
       tempArr.push(el)
     }
   })
   obj.stylesheet.rules = tempArr
-  // second, maybe we deleted the last selector and whole "stylesheet" is empty:
+  // second, maybe we deleted the last selector and the whole "stylesheet" is now empty:
   //
   // {
   //   "type": "stylesheet",
@@ -253,6 +276,24 @@ function deleteRulesWithNoSelectors (obj) {
   }
   //
   return obj
+}
+
+// =========
+
+/**
+ * deleteObjFromAst - deletes objects from parsed HTML - AST trees
+ *
+ * @param  {Arr} astArray       AST in array form
+ * @param  {Object} objToDelete Object to search for and delete
+ * @param  {type} strictOrNot   If FALSE, it's enough a found object to have
+ * the same keys/values as "objToDelete" in order to be deleted. There can be more
+ * things, but whole object will still be deleted.
+ * If TRUE, mode is strict and finding has EXACTLY match the "objToDelete"
+ * @param  {type} result        INTERNAL VARIABLE, used in recursion
+ * @return {Arr}                amended AST
+ */
+function deleteObjFromAst (astArray, objToDelete, strictOrNot, result) {
+  return result
 }
 
 // =========
@@ -278,9 +319,9 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // PART I. Get all styles from within <head>
   //
 
-  var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
+  var rawParsedHtml = fs.readFileSync('./dummy_html/test4.html').toString()
   var htmlAstObj = parser(rawParsedHtml)
-  console.log('starting htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  // console.log('*** starting htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
   var step_three = findTag(htmlAstObj, 'style')
   // console.log('original step_three = ' + JSON.stringify(step_three, null, 4))
   // var step_four = css.parse(step_three[0].content[0])
@@ -292,11 +333,12 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   })
   // dedupe:
   allStyleTagSelectors = _.uniq(allStyleTagSelectors)
-  var allClassesWithinHead = sortClassesFromArrays(allStyleTagSelectors)[0]
-  var allIdSelectors = sortClassesFromArrays(allStyleTagSelectors)[1]
+  console.log('allStyleTagSelectors = ' + JSON.stringify(allStyleTagSelectors, null, 4))
+  var allClassesWithinHead = _.uniq(sortClassesFromArrays(allStyleTagSelectors)[0])
+  var allIdSelectors = _.uniq(sortClassesFromArrays(allStyleTagSelectors)[1])
   // console.log('\n\n===============\nall selectors from <style> tags: ' + JSON.stringify(allStyleTagSelectors, null, 4) + '\n===============\n\n')
-  // console.log('all classes from style tags: ' + JSON.stringify(allClassesWithinHead, null, 4))
-  // console.log('all id\'s from style tags: ' + JSON.stringify(allIdSelectors, null, 4))
+  console.log('all classes from style tags: ' + JSON.stringify(allClassesWithinHead, null, 4))
+  console.log('all id\'s from style tags: ' + JSON.stringify(allIdSelectors, null, 4))
 
   //
   // PART II. Get all inline styles from within <body>
@@ -337,7 +379,7 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // we already have step_three, which is all <style> tags.
   // First, prep step_three, :
   // console.log('===========================================')
-  console.log('step_three before prepping: ' + JSON.stringify(step_three, null, 4))
+  // console.log('step_three before prepping: ' + JSON.stringify(step_three, null, 4))
   step_three.forEach(function (el, i) {
     // console.log('before deleting: ' + JSON.stringify(el.content[0], null, 4))
     // var nn = css.parse(el.content[0])
@@ -396,7 +438,7 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
     }
   })
 
-  console.log('step_three before replacing AST: ' + JSON.stringify(step_three, null, 4))
+  // console.log('step_three before replacing AST: ' + JSON.stringify(step_three, null, 4))
   htmlAstObj = getAllValuesByKey(htmlAstObj, 'style', step_three)
 
   // clean up the HTML AST from empty <style> tags:
@@ -407,9 +449,9 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // }
   //
 
+  htmlAstObj = deleteObjFromAst(htmlAstObj, { 'tag': 'style', 'content': {} }, false)
 
-
-  console.log('new htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  console.log('*** new htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
 
 })()
 // ========================================
