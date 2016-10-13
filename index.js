@@ -41,7 +41,7 @@ function findTag (objOrArr, tagName, replacementContents, result) {
   var tempObj = {}
   result = result || []
   if (tagName === null || tagName === undefined || tagName === '' || typeof tagName !== 'string') {
-    return null
+    return objOrArr
   }
   // if object is passed, crawl it, checking for key=tagName:
   if (isObject(objOrArr)) {
@@ -142,12 +142,14 @@ function getAllValuesByKey (input, whatToFind, replacement, result) {
       // - otherwise, prepare the return array:
       // it can be straight text or array
         if (Array.isArray(input[whatToFind])) {
+          var tempArr = []
           input[whatToFind].forEach(function (elem) {
-            result.push(elem)
+            tempArr.push(elem)
           })
+          result.push(tempArr)
         } else {
           // must be String then:
-          result.push(input[whatToFind])
+          result.push([input[whatToFind]])
         }
       }
     }
@@ -202,6 +204,59 @@ function sortClassesFromArrays (arrayIn) {
 
 // =========
 
+function prependDotsToEachEl (arr) {
+  return arr.map(function (el) {
+    return '.' + el
+  })
+}
+
+// =========
+
+function deleteRulesWithNoSelectors (obj) {
+  // console.log('obj = ' + JSON.stringify(obj, null, 4))
+  if (!isObject(obj)) {
+    return obj
+  }
+  var tempArr = []
+
+  // first, check for empty "selectors": [], like this:
+  //
+  // "stylesheet": {
+  //   "rules": [
+  //     {
+  //       "type": "rule",
+  //       "selectors": [],
+  //
+  obj.stylesheet.rules.forEach(function (el, i) {
+    // console.log('\n************\n************\n************\n************\nel = ' + JSON.stringify(el, null, 4))
+    // console.log('el.selectors = ' + JSON.stringify(el.selectors, null, 4))
+    // console.log('* ' + el.selectors.length)
+    if (el.selectors.length > 0) {
+      tempArr.push(el)
+    }
+  })
+  obj.stylesheet.rules = tempArr
+  // second, maybe we deleted the last selector and whole "stylesheet" is empty:
+  //
+  // {
+  //   "type": "stylesheet",
+  //   "stylesheet": {
+  //     "rules": [],
+  //     "parsingErrors": []
+  //   }
+  // }
+  //
+  if (!obj.stylesheet.rules.length) {
+    // console.log('obj before: ' + JSON.stringify(obj, null, 4))
+    obj = {}
+    // console.log('obj after: ' + JSON.stringify(obj, null, 4))
+  }
+  //
+  return obj
+}
+
+// =========
+
 /**
  * emailRemoveUnusedCss - the main function
  * Purpose: for use in email newsletter development to clean email templates
@@ -225,15 +280,15 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
 
   var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
   var htmlAstObj = parser(rawParsedHtml)
-  // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  console.log('starting htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
   var step_three = findTag(htmlAstObj, 'style')
-  // console.log('step_three = ' + JSON.stringify(step_three, null, 4))
+  // console.log('original step_three = ' + JSON.stringify(step_three, null, 4))
   // var step_four = css.parse(step_three[0].content[0])
   // var allStyleTagSelectors = getAllValuesByKey(step_four)
   var allStyleTagSelectors = []
   // Note to self. CSS Parser will have all selectors under keys "selectors"
   step_three.forEach(function (el, i) {
-    allStyleTagSelectors = allStyleTagSelectors.concat(getAllValuesByKey(css.parse(step_three[i].content[0]), 'selectors'))
+    allStyleTagSelectors = allStyleTagSelectors.concat(_.flatten(getAllValuesByKey(css.parse(step_three[i].content[0]), 'selectors')))
   })
   // dedupe:
   allStyleTagSelectors = _.uniq(allStyleTagSelectors)
@@ -249,7 +304,7 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
 
   // Note to self. HTML Parser will have all class attributes under keys "class"
   // allClassesWithinBodyRawContentsArray is array of strings, each is {value} from class="{value}"
-  var allClassesWithinBodyRawContentsArray = getAllValuesByKey(htmlAstObj, 'class')
+  var allClassesWithinBodyRawContentsArray = _.flatten(getAllValuesByKey(htmlAstObj, 'class'))
   var allClassesWithinBodySplitArray = []
   allClassesWithinBodyRawContentsArray.forEach(function (el) {
     el.split(' ').forEach(function (el) {
@@ -281,16 +336,81 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
 
   // we already have step_three, which is all <style> tags.
   // First, prep step_three, :
+  // console.log('===========================================')
+  console.log('step_three before prepping: ' + JSON.stringify(step_three, null, 4))
   step_three.forEach(function (el, i) {
-    console.log('el.content[0] = ' + JSON.stringify(el.content[0], null, 4))
-    var nn = css.parse(el.content[0])
-    console.log('nn = ' + JSON.stringify(nn, null, 4))
+    // console.log('before deleting: ' + JSON.stringify(el.content[0], null, 4))
+    // var nn = css.parse(el.content[0])
+    // console.log('nn = ' + JSON.stringify(nn, null, 4))
     // --
-    var oo = getAllValuesByKey(css.parse(el.content[0]), 'selectors', [['.d-w1'], []])
-    console.log('oo = ' + JSON.stringify(oo, null, 4) + '\n=====================================\n=====================================\n')
+    var old_oo = getAllValuesByKey(css.parse(el.content[0]), 'selectors')
+    // console.log('old_oo = ' + JSON.stringify(old_oo, null, 4) + '\n=====================================\n=====================================\n')
     // --
 
+    var new_oo = _.clone(old_oo)
+    new_oo.forEach(function (el, i) {
+      _.pullAll(new_oo[i], prependDotsToEachEl(headCssToDelete))
+    })
+
+    var erasedTest = deleteRulesWithNoSelectors(getAllValuesByKey(css.parse(el.content[0]), 'selectors', new_oo))
+    // console.log('erasedTest = ' + JSON.stringify(erasedTest, null, 4) + '\n=====================================\n=====================================\n')
+
+    var stringifiedErasedTest
+
+    if (Object.keys(erasedTest).length !== 0) {
+      stringifiedErasedTest = css.stringify(erasedTest)
+    } else {
+      // assign manually because css.stringify doesn't accept "{}"
+      stringifiedErasedTest = ''
+    }
+    // console.log('stringifiedErasedTest: ' + JSON.stringify(stringifiedErasedTest, null, 4) + '\n===========================================')
+
+    // assign the stringified thing back to "content": ['...']
+    el.content[0] = stringifiedErasedTest
+    //
   })
+  // console.log('step_three after CSS cleaning: ' + JSON.stringify(step_three, null, 4))
+  // we cleaned the CSS, but now we need to clean at HTML-level too:
+  // [
+  //   {
+  //     "tag": "style",
+  //     "content": [
+  //       ""
+  //     ]
+  //   },
+  //   ...
+  //
+  // needs to be turned into:
+  // [
+  //   {},
+  //   ...
+  //
+  // Most important, we'll retain the empty object, in order to keep the order right
+  // later when we'll be replacing the HTML AST tree with it.
+  //
+
+  step_three.forEach(function (el, i) {
+    // console.log('el = ' + JSON.stringify(el, null, 4))
+    if ((el.tag === 'style') && (el.content.length === 1) && (el.content[0].length === 0)) {
+      step_three[i] = {}
+    }
+  })
+
+  console.log('step_three before replacing AST: ' + JSON.stringify(step_three, null, 4))
+  htmlAstObj = getAllValuesByKey(htmlAstObj, 'style', step_three)
+
+  // clean up the HTML AST from empty <style> tags:
+  //
+  // {
+  //   "tag": "style",
+  //   "content": {}
+  // }
+  //
+
+
+
+  console.log('new htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+
 })()
 // ========================================
 // css parser: https://github.com/reworkcss/css
