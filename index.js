@@ -13,14 +13,42 @@ var whitelist = [
   'ReadMsgBody',
   'yshortcuts',
   'maxwidth-apple-mail-fix',
-  'module-'
+  'module-*'
 ]
 
 // ===================================
 // F U N C T I O N S
 
-function aContainsB (a, b) {
-  return a.indexOf(b) >= 0
+/**
+ * pullAllWithGlob - like _.pullAll but pulling stronger
+ * Accepts * glob. This: "module-*" would pull all: "module-1", "module-zzz"...
+ *
+ * @param  {Array} incomingArray   array of strings
+ * @param  {Array} whitelistArray  array of strings (might contain asterisk)
+ * @return {Array}                 pulled array
+ */
+function pullAllWithGlob (incomingArray, whitelistArray) {
+  console.log('incomingArray = ' + JSON.stringify(incomingArray, null, 4))
+  function aContainsB (a, b) {
+    return a.indexOf(b) >= 0
+  }
+  function aStartsWithB (a, b) {
+    return a.indexOf(b) === 0
+  }
+  if (!Array.isArray(whitelistArray) || !Array.isArray(incomingArray)) {
+    return incomingArray
+  }
+  whitelistArray.forEach(function (whitelistArrayElem, whitelistArrayIndex) {
+    _.remove(incomingArray, function (n) {
+      if (aContainsB(whitelistArrayElem, '*')) {
+        return aStartsWithB(n, _.replace(whitelistArrayElem, /[*].*/g, '')) // TODO
+      } else {
+        return n === whitelistArrayElem
+      }
+    })
+  })
+  console.log('incomingArray = ' + JSON.stringify(incomingArray, null, 4))
+  return incomingArray
 }
 
 // =========
@@ -307,6 +335,7 @@ function deleteRulesWithNoSelectors (obj) {
  * @return {Arr}                amended AST
  */
 function deleteObjFromAst (astArray, objToDelete, strictOrNot, result) {
+  // TODO
   return result
 }
 
@@ -333,7 +362,7 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // PART I. Get all styles from within <head>
   //
 
-  var rawParsedHtml = fs.readFileSync('./dummy_html/test4.html').toString()
+  var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
   var htmlAstObj = parser(rawParsedHtml)
   // console.log('*** starting htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
   var step_three = findTag(htmlAstObj, 'style')
@@ -348,8 +377,12 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // dedupe:
   allStyleTagSelectors = _.uniq(allStyleTagSelectors)
   console.log('allStyleTagSelectors = ' + JSON.stringify(allStyleTagSelectors, null, 4))
+
   var allClassesWithinHead = _.uniq(sortClassesFromArrays(allStyleTagSelectors)[0])
+  allClassesWithinHead = pullAllWithGlob(allClassesWithinHead, whitelist)
+
   var allIdSelectors = _.uniq(sortClassesFromArrays(allStyleTagSelectors)[1])
+
   // console.log('\n\n===============\nall selectors from <style> tags: ' + JSON.stringify(allStyleTagSelectors, null, 4) + '\n===============\n\n')
   console.log('all classes from style tags: ' + JSON.stringify(allClassesWithinHead, null, 4))
   console.log('all id\'s from style tags: ' + JSON.stringify(allIdSelectors, null, 4))
