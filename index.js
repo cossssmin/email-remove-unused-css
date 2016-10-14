@@ -28,7 +28,7 @@ var whitelist = [
  * @return {Array}                 pulled array
  */
 function pullAllWithGlob (incomingArray, whitelistArray) {
-  console.log('incomingArray = ' + JSON.stringify(incomingArray, null, 4))
+  // console.log('incomingArray = ' + JSON.stringify(incomingArray, null, 4))
   function aContainsB (a, b) {
     return a.indexOf(b) >= 0
   }
@@ -47,7 +47,7 @@ function pullAllWithGlob (incomingArray, whitelistArray) {
       }
     })
   })
-  console.log('incomingArray = ' + JSON.stringify(incomingArray, null, 4))
+  // console.log('incomingArray = ' + JSON.stringify(incomingArray, null, 4))
   return incomingArray
 }
 
