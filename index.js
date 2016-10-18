@@ -7,6 +7,8 @@ var fs = require('fs')
 var parser = require('posthtml-parser')
 var css = require('css')
 var _ = require('lodash')
+var deleteObjFromAst = require('posthtml-ast-delete-object')
+var render = require('posthtml-render')
 
 var whitelist = [
   'ExternalClass',
@@ -228,11 +230,10 @@ function getAllValuesByKey (input, whatToFind, replacement, result) {
  * ['.class2', '.id1', .class2, '.id2']
  * and separates classes from ids, returning array of each
  *
- * @param  {Array} arrayIn array of class, id or nonsense selectors
+ * @param  {Array} arrayIn array of class, id selectors (or nonsenses)
  * @return {Array}         array of two arrays: classes and id's
  */
 function sortClassesFromArrays (arrayIn) {
-
   function chopOffUpToDot (str) {
     return _.replace(str, /[^.]*[.]/g, '')
   }
@@ -323,25 +324,6 @@ function deleteRulesWithNoSelectors (obj) {
 // =========
 
 /**
- * deleteObjFromAst - deletes objects from parsed HTML - AST trees
- *
- * @param  {Arr} astArray       AST in array form
- * @param  {Object} objToDelete Object to search for and delete
- * @param  {type} strictOrNot   If FALSE, it's enough a found object to have
- * the same keys/values as "objToDelete" in order to be deleted. There can be more
- * things, but whole object will still be deleted.
- * If TRUE, mode is strict and finding has EXACTLY match the "objToDelete"
- * @param  {type} result        INTERNAL VARIABLE, used in recursion
- * @return {Arr}                amended AST
- */
-function deleteObjFromAst (astArray, objToDelete, strictOrNot, result) {
-  // TODO
-  return result
-}
-
-// =========
-
-/**
  * emailRemoveUnusedCss - the main function
  * Purpose: for use in email newsletter development to clean email templates
  * Removes unused CSS from <head> and unused CSS from BODY
@@ -362,9 +344,9 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // PART I. Get all styles from within <head>
   //
 
-  var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
+  var rawParsedHtml = fs.readFileSync('./dummy_html/test3.html').toString()
   var htmlAstObj = parser(rawParsedHtml)
-  // console.log('*** starting htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  console.log('*** starting htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
   var step_three = findTag(htmlAstObj, 'style')
   // console.log('original step_three = ' + JSON.stringify(step_three, null, 4))
   // var step_four = css.parse(step_three[0].content[0])
@@ -435,16 +417,18 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
     // console.log('nn = ' + JSON.stringify(nn, null, 4))
     // --
     var old_oo = getAllValuesByKey(css.parse(el.content[0]), 'selectors')
-    // console.log('old_oo = ' + JSON.stringify(old_oo, null, 4) + '\n=====================================\n=====================================\n')
+    console.log('old_oo = ' + JSON.stringify(old_oo, null, 4) + '\n=====================================\n=====================================\n')
     // --
 
     var new_oo = _.clone(old_oo)
     new_oo.forEach(function (el, i) {
       _.pullAll(new_oo[i], prependDotsToEachEl(headCssToDelete))
     })
+    console.log('2. new_oo = ' + JSON.stringify(new_oo, null, 4))
+
 
     var erasedTest = deleteRulesWithNoSelectors(getAllValuesByKey(css.parse(el.content[0]), 'selectors', new_oo))
-    // console.log('erasedTest = ' + JSON.stringify(erasedTest, null, 4) + '\n=====================================\n=====================================\n')
+    console.log('erasedTest = ' + JSON.stringify(erasedTest, null, 4) + '\n=====================================\n=====================================\n')
 
     var stringifiedErasedTest
 
@@ -498,10 +482,12 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // }
   //
 
-  htmlAstObj = deleteObjFromAst(htmlAstObj, { 'tag': 'style', 'content': {} }, false)
+  htmlAstObj = deleteObjFromAst(htmlAstObj, { 'tag': 'style', 'content': {} })
 
-  console.log('*** new htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  fs.writeFileSync('./dummy_html/clean.html', render(htmlAstObj))
 
+  // console.log('*** new htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  // console.log(render(htmlAstObj))
 })()
 // ========================================
 // css parser: https://github.com/reworkcss/css
