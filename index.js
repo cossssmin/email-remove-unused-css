@@ -284,12 +284,14 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // First, prep step_three, :
   // console.log('===========================================')
   // console.log('step_three before prepping: ' + JSON.stringify(step_three, null, 4))
+  // console.log('===========================================')
 
   step_three.forEach(function (el, i) {
     var parsedCSS = css.parse(el.content[0])
+    // console.log('*** parsedCSS = ' + JSON.stringify(parsedCSS, null, 4))
 
     var allSelectors = getAllValuesByKey(parsedCSS, 'selectors')
-    // console.log('allSelectors = ' + JSON.stringify(allSelectors, null, 4))
+    console.log('*** allSelectors = ' + JSON.stringify(allSelectors, null, 4))
     var new_oo = _.clone(allSelectors)
 
     // console.log('new_oo BEFORE: ' + JSON.stringify(new_oo, null, 4))
@@ -297,16 +299,20 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
     new_oo.forEach(function (elem1, index1) {
       // console.log('new_oo[' + index1 + '] = ' + JSON.stringify(new_oo[index1], null, 4))
       elem1.forEach(function (elem2, index2) {
-        new_oo[index1][index2] = extract(new_oo[index1][index2], '.')
+        if (_.includes(headCssToDelete, extract(new_oo[index1][index2], '.'))) {
+          // console.log('REMOVE: ' + JSON.stringify(new_oo[index1][index2], null, 4))
+          new_oo[index1][index2] = ''
+        }
+        // else {
+        //   console.log('KEEP: ' + JSON.stringify(new_oo[index1][index2], null, 4))
+        // }
       })
     })
 
-    // console.log('new_oo AFTER: ' + JSON.stringify(new_oo, null, 4))
-
     new_oo.forEach(function (el, i) {
-      _.pullAll(new_oo[i], headCssToDelete)
+      new_oo[i] = _.without(new_oo[i], '')
     })
-    // console.log('AFTER PULLING, new_oo = ' + JSON.stringify(new_oo, null, 4))
+    console.log('*** AFTER PULLING, new_oo = ' + JSON.stringify(new_oo, null, 4))
 
     // finally, write over:
     var erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', new_oo)
@@ -322,7 +328,7 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
     var stringifiedErasedTest
 
     if (existy(erasedWithNoEmpty) && (Object.keys(erasedWithNoEmpty).length !== 0)) {
-      stringifiedErasedTest = css.stringify(erasedWithNoEmpty)
+      stringifiedErasedTest = '\n' + css.stringify(erasedWithNoEmpty) + '\n'
     } else {
       // assign manually because css.stringify doesn't accept "{}"
       stringifiedErasedTest = ''
