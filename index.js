@@ -9,6 +9,8 @@ var css = require('css')
 var _ = require('lodash')
 var deleteObjFromAst = require('posthtml-ast-delete-object')
 var render = require('posthtml-render')
+var extract = require('string-extract-class-names')
+var getAllValuesByKey = require('posthtml-ast-get-values-by-key')
 
 var whitelist = [
   'ExternalClass',
@@ -21,6 +23,14 @@ var whitelist = [
 // ===================================
 // F U N C T I O N S
 
+function aContainsB (a, b) {
+  return a.indexOf(b) >= 0
+}
+
+function aStartsWithB (a, b) {
+  return a.indexOf(b) === 0
+}
+
 /**
  * pullAllWithGlob - like _.pullAll but pulling stronger
  * Accepts * glob. This: "module-*" would pull all: "module-1", "module-zzz"...
@@ -31,12 +41,6 @@ var whitelist = [
  */
 function pullAllWithGlob (incomingArray, whitelistArray) {
   // console.log('incomingArray = ' + JSON.stringify(incomingArray, null, 4))
-  function aContainsB (a, b) {
-    return a.indexOf(b) >= 0
-  }
-  function aStartsWithB (a, b) {
-    return a.indexOf(b) === 0
-  }
   if (!Array.isArray(whitelistArray) || !Array.isArray(incomingArray)) {
     return incomingArray
   }
@@ -150,82 +154,6 @@ function truthy (x) { return (x !== false) && existy(x) };
 // =========
 
 /**
- * getAllValuesByKey - query a key, get an array of values of all that key instances
- *
- * @param  {Whatever} input - AST tree object or Array or String (if called recursively)
- * @param  {String} whatToFind - the name of the key to find. We'll put its value into results array
- * @param  {Array} replacement (optional) - what to replace all found values with
- * @param  {Array} result - INNER VARIABLE - to retain values when called recursively
- * @return {Array|null}  output   Null or Array of all selectors
- */
-function getAllValuesByKey (input, whatToFind, replacement, result) {
-  result = result || []
-  if (typeof whatToFind !== 'string') {
-    whatToFind = String(whatToFind)
-  }
-  if (isObject(input)) {
-    // firstly, check does it have key named {whatToFind}, for example "selectors"
-    if (existy(input[whatToFind])) {
-      // - if replacement is sent, replace:
-      if (truthy(replacement)) {
-        // -- if replacement is a string:
-        if (_.isString(replacement)) {
-          input[whatToFind] = replacement
-        } else if (_.isArray(replacement)) {
-        // -- if replacement is array:
-          // --- use the first value in replacement[] array:
-          if (existy(replacement[0])) {
-            input[whatToFind] = replacement[0]
-          }
-          // --- remove the first element from the replacement array:
-          replacement.shift()
-        } else {
-          throw new Error('Replacement is not recognised!')
-        }
-      } else {
-      // - otherwise, prepare the return array:
-      // it can be straight text or array
-        if (Array.isArray(input[whatToFind])) {
-          var tempArr = []
-          input[whatToFind].forEach(function (elem) {
-            tempArr.push(elem)
-          })
-          result.push(tempArr)
-        } else {
-          // must be String then:
-          result.push([input[whatToFind]])
-        }
-      }
-    }
-    // secondly, iterate all keys for deeper content
-    Object.keys(input).forEach(function (el) {
-      // if stumbled on value which is Array
-      if (Array.isArray(input[el]) || isObject(input[el])) {
-        // if replacement mode, pass result as incoming object!
-
-        // else, pass original input object
-        getAllValuesByKey(input[el], whatToFind, replacement, result)
-      }
-    })
-  }
-  // if array is passed, iterate each elem, check if it's Obj, call itself recursively
-  if (Array.isArray(input)) {
-    input.forEach(function (el) {
-      if (isObject(el)) {
-        getAllValuesByKey(el, whatToFind, replacement, result)
-      }
-    })
-  }
-  if (truthy(replacement)) {
-    return input
-  } else {
-    return result
-  }
-}
-
-// =========
-
-/**
  * sortClassesFromArrays - reads array of selectors like
  * ['.class2', '.id1', .class2, '.id2']
  * and separates classes from ids, returning array of each
@@ -234,32 +162,18 @@ function getAllValuesByKey (input, whatToFind, replacement, result) {
  * @return {Array}         array of two arrays: classes and id's
  */
 function sortClassesFromArrays (arrayIn) {
-  function chopOffUpToDot (str) {
-    return _.replace(str, /[^.]*[.]/g, '')
-  }
-
-  function chopOffUpToHash (str) {
-    return _.replace(str, /[^#]*[#]/g, '')
-  }
-
-  function chopOffTheRest (str) {
-    return _.replace(str, /[ :>.#+~\[\]].*/g, '')
-  }
-
   var classArrOut = []
   var idArrOut = []
   var temp
   arrayIn.forEach(function (el, i) {
     if ((el.indexOf('#') !== -1) && (el[1] !== undefined)) {
-      temp = chopOffUpToHash(el)
-      temp = chopOffTheRest(temp)
+      temp = extract(el, '#')
       if (temp.length > 0) {
         idArrOut.push(temp)
       }
     }
     if ((el.indexOf('.') !== -1) && (el[1] !== undefined)) {
-      temp = chopOffUpToDot(el)
-      temp = chopOffTheRest(temp)
+      temp = extract(el, '.')
       if (temp.length > 0) {
         classArrOut.push(temp)
       }
@@ -278,47 +192,13 @@ function prependDotsToEachEl (arr) {
 
 // =========
 
-function deleteRulesWithNoSelectors (obj) {
-  // console.log('obj = ' + JSON.stringify(obj, null, 4))
-  if (!isObject(obj)) {
-    return obj
+function removeFromTheFrontOfEachEl (arr, whatToRemove) {
+  if (!_.isArray(arr) || !_.isString(whatToRemove)) {
+    return arr
   }
-  var tempArr = []
-
-  // first, check for empty "selectors": [], like this:
-  //
-  // "stylesheet": {
-  //   "rules": [
-  //     {
-  //       "type": "rule",
-  //       "selectors": [],
-  //
-  obj.stylesheet.rules.forEach(function (el, i) {
-    // console.log('\n************\n************\n************\n************\nel = ' + JSON.stringify(el, null, 4))
-    // console.log('el.selectors = ' + JSON.stringify(el.selectors, null, 4))
-    // console.log('* ' + el.selectors.length)
-    if (existy(el.selectors) && el.selectors.length > 0) {
-      tempArr.push(el)
-    }
+  return arr.map(function (el) {
+    return _.trimStart(el, whatToRemove)
   })
-  obj.stylesheet.rules = tempArr
-  // second, maybe we deleted the last selector and the whole "stylesheet" is now empty:
-  //
-  // {
-  //   "type": "stylesheet",
-  //   "stylesheet": {
-  //     "rules": [],
-  //     "parsingErrors": []
-  //   }
-  // }
-  //
-  if (!obj.stylesheet.rules.length) {
-    // console.log('obj before: ' + JSON.stringify(obj, null, 4))
-    obj = {}
-    // console.log('obj after: ' + JSON.stringify(obj, null, 4))
-  }
-  //
-  return obj
 }
 
 // =========
@@ -344,7 +224,7 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   // PART I. Get all styles from within <head>
   //
 
-  var rawParsedHtml = fs.readFileSync('./dummy_html/test3.html').toString()
+  var rawParsedHtml = fs.readFileSync('./dummy_html/test1.html').toString()
   var htmlAstObj = parser(rawParsedHtml)
   console.log('*** starting htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
   var step_three = findTag(htmlAstObj, 'style')
@@ -358,16 +238,14 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   })
   // dedupe:
   allStyleTagSelectors = _.uniq(allStyleTagSelectors)
-  console.log('allStyleTagSelectors = ' + JSON.stringify(allStyleTagSelectors, null, 4))
+  // console.log('allStyleTagSelectors = ' + JSON.stringify(allStyleTagSelectors, null, 4))
 
   var allClassesWithinHead = _.uniq(sortClassesFromArrays(allStyleTagSelectors)[0])
+  // console.log('allClassesWithinHead = ' + JSON.stringify(allClassesWithinHead, null, 4))
   allClassesWithinHead = pullAllWithGlob(allClassesWithinHead, whitelist)
-
-  var allIdSelectors = _.uniq(sortClassesFromArrays(allStyleTagSelectors)[1])
 
   // console.log('\n\n===============\nall selectors from <style> tags: ' + JSON.stringify(allStyleTagSelectors, null, 4) + '\n===============\n\n')
   console.log('all classes from style tags: ' + JSON.stringify(allClassesWithinHead, null, 4))
-  console.log('all id\'s from style tags: ' + JSON.stringify(allIdSelectors, null, 4))
 
   //
   // PART II. Get all inline styles from within <body>
@@ -391,54 +269,64 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   //
 
   var headCssToDelete = _.clone(allClassesWithinHead)
-  _.pullAll(headCssToDelete, allClassesWithinBodySplitArray)
-  // TODO: remove whitelist smartly, depending does it have asterisk or not
-  console.log('\n==================\n\nheadCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4))
+  _.pullAll(headCssToDelete, prependDotsToEachEl(allClassesWithinBodySplitArray))
+  console.log('\n* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4))
 
   var bodyCssToDelete = _.clone(allClassesWithinBodySplitArray)
-  _.pullAll(bodyCssToDelete, allClassesWithinHead)
-  // TODO: remove whitelist smartly, depending does it have asterisk or not
-  console.log('bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4))
+  _.pullAll(bodyCssToDelete, removeFromTheFrontOfEachEl(allClassesWithinHead, '.'))
+  console.log('* bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4) + '\n')
 
   //
   // PART IV. Delete classes from <head>
   //
 
-  // var testTagReplacement = findTag(htmlAstObj, 'html', [['yo1'], ['yo2']])
-  // console.log('testTagReplacement = ' + JSON.stringify(testTagReplacement, null, 4))
-
   // we already have step_three, which is all <style> tags.
   // First, prep step_three, :
   // console.log('===========================================')
   // console.log('step_three before prepping: ' + JSON.stringify(step_three, null, 4))
+
   step_three.forEach(function (el, i) {
-    // console.log('before deleting: ' + JSON.stringify(el.content[0], null, 4))
-    // var nn = css.parse(el.content[0])
-    // console.log('nn = ' + JSON.stringify(nn, null, 4))
-    // --
-    var old_oo = getAllValuesByKey(css.parse(el.content[0]), 'selectors')
-    console.log('old_oo = ' + JSON.stringify(old_oo, null, 4) + '\n=====================================\n=====================================\n')
-    // --
+    var parsedCSS = css.parse(el.content[0])
 
-    var new_oo = _.clone(old_oo)
-    new_oo.forEach(function (el, i) {
-      _.pullAll(new_oo[i], prependDotsToEachEl(headCssToDelete))
+    var allSelectors = getAllValuesByKey(parsedCSS, 'selectors')
+    // console.log('allSelectors = ' + JSON.stringify(allSelectors, null, 4))
+    var new_oo = _.clone(allSelectors)
+
+    // console.log('new_oo BEFORE: ' + JSON.stringify(new_oo, null, 4))
+
+    new_oo.forEach(function (elem1, index1) {
+      // console.log('new_oo[' + index1 + '] = ' + JSON.stringify(new_oo[index1], null, 4))
+      elem1.forEach(function (elem2, index2) {
+        new_oo[index1][index2] = extract(new_oo[index1][index2], '.')
+      })
     })
-    console.log('2. new_oo = ' + JSON.stringify(new_oo, null, 4))
 
+    // console.log('new_oo AFTER: ' + JSON.stringify(new_oo, null, 4))
 
-    var erasedTest = deleteRulesWithNoSelectors(getAllValuesByKey(css.parse(el.content[0]), 'selectors', new_oo))
-    console.log('erasedTest = ' + JSON.stringify(erasedTest, null, 4) + '\n=====================================\n=====================================\n')
+    new_oo.forEach(function (el, i) {
+      _.pullAll(new_oo[i], headCssToDelete)
+    })
+    // console.log('AFTER PULLING, new_oo = ' + JSON.stringify(new_oo, null, 4))
+
+    // finally, write over:
+    var erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', new_oo)
+    // delete all empty selectors within rules:
+    var erasedWithNoEmpty = deleteObjFromAst(erasedTest, {selectors: []})
+    erasedWithNoEmpty = deleteObjFromAst(erasedWithNoEmpty, {type: 'rule', selectors: []})
+    // delete all empty rules:
+    erasedWithNoEmpty = deleteObjFromAst(erasedWithNoEmpty, {rules: []})
+    // delete empty style blocks:
+    erasedWithNoEmpty = deleteObjFromAst(erasedWithNoEmpty, {type: 'stylesheet', stylesheet: {rules: []}}, true)
+    erasedWithNoEmpty = deleteObjFromAst(erasedWithNoEmpty, {type: 'stylesheet'}, true)
 
     var stringifiedErasedTest
 
-    if (Object.keys(erasedTest).length !== 0) {
-      stringifiedErasedTest = css.stringify(erasedTest)
+    if (existy(erasedWithNoEmpty) && (Object.keys(erasedWithNoEmpty).length !== 0)) {
+      stringifiedErasedTest = css.stringify(erasedWithNoEmpty)
     } else {
       // assign manually because css.stringify doesn't accept "{}"
       stringifiedErasedTest = ''
     }
-    // console.log('stringifiedErasedTest: ' + JSON.stringify(stringifiedErasedTest, null, 4) + '\n===========================================')
 
     // assign the stringified thing back to "content": ['...']
     el.content[0] = stringifiedErasedTest
@@ -478,11 +366,33 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
   //
   // {
   //   "tag": "style",
-  //   "content": {}
+  //   "content": [{}]
   // }
   //
 
-  htmlAstObj = deleteObjFromAst(htmlAstObj, { 'tag': 'style', 'content': {} })
+  htmlAstObj = deleteObjFromAst(htmlAstObj, { 'tag': 'style', 'content': [''] })
+
+  //
+  // PART V. Delete classes from within <body>
+  //
+
+  var allBodyClasses = getAllValuesByKey(htmlAstObj, 'class')
+  var allBodyClassesSplitArr
+  console.log('allBodyClasses = ' + JSON.stringify(allBodyClasses, null, 4))
+  allBodyClasses.forEach(function (el, i) {
+    allBodyClassesSplitArr = _.without(allBodyClasses[i].split(' '), '')
+    _.pullAll(allBodyClassesSplitArr, bodyCssToDelete)
+    allBodyClasses[i] = allBodyClassesSplitArr.join(' ')
+  })
+  console.log('pulled allBodyClasses = ' + JSON.stringify(allBodyClasses, null, 4))
+  // write:
+  console.log('BEFORE REPLACE htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+  htmlAstObj = getAllValuesByKey(htmlAstObj, 'class', allBodyClasses)
+  console.log('AFTER REPLACE htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+
+  //
+  // FINALE. Write out.
+  //
 
   fs.writeFileSync('./dummy_html/clean.html', render(htmlAstObj))
 
