@@ -244,17 +244,19 @@ function emailRemoveUnusedCss (htmlContentsAsString) {
     // console.log('*** allSelectors = ' + JSON.stringify(allSelectors, null, 4))
     var new_oo = _.clone(allSelectors)
 
-    // console.log('new_oo BEFORE: ' + JSON.stringify(new_oo, null, 4))
+    console.log('new_oo BEFORE: ' + JSON.stringify(new_oo, null, 4))
 
     new_oo.forEach(function (elem1, index1) {
-      // console.log('new_oo[' + index1 + '] = ' + JSON.stringify(new_oo[index1], null, 4))
-      for (var i = 0, len = headCssToDelete.length; i < len; i++) {
-        // console.log('headCssToDelete[i] = ' + JSON.stringify(headCssToDelete[i], null, 4))
-        if (_.includes(extract(new_oo[index1][0]), headCssToDelete[i])) {
-          // console.log('REMOVE: ' + JSON.stringify(new_oo[index1][0], null, 4))
-          new_oo[index1][0] = ''
+      console.log('new_oo[' + index1 + '] = ' + JSON.stringify(new_oo[index1], null, 4))
+      elem1.forEach(function (elem2, index2) {
+        console.log('new_oo[' + index1 + '][' + index2 + '] = ' + JSON.stringify(new_oo[index1][index2], null, 4))
+        for (var i = 0, len = headCssToDelete.length; i < len; i++) {
+          // console.log('headCssToDelete[i] = ' + JSON.stringify(headCssToDelete[i], null, 4))
+          if (_.includes(extract(new_oo[index1][index2]), headCssToDelete[i])) {
+            new_oo[index1][index2] = ''
+          }
         }
-      }
+      })
     })
 
     new_oo.forEach(function (el, i) {
