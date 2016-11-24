@@ -62,7 +62,7 @@ The parser used for HTML part is quite forgiving; it takes some creativity to ma
 
 The parser for CSS parts is very sensitive and will throw an error if it encounters even a missing curly brace.
 
-When either parser throws an error, this library throws the same error. This might or might not be what you want. In latter case pass `{noThrowing = true}` and this library will kindly return a string `the input code has problems, please check it` and keep that dirty secret without throwing.
+When either parser throws an error, this library throws the same error. This might or might not be what you want. In latter case pass `{noThrowing = true}` and this library will kindly return a string `the input code has problems, please check it` and keep that dirty secret between us without _throwing_ (up)¹.
 
 ```js
 var html = '<html<html<html<html xmlns="http://www.w3.org/1999/xhtml">'
@@ -85,6 +85,28 @@ console.log(newHTML[0]) // remember result will come in an array's first element
 // second argument will contain object with information regarding this cleaning
 ```
 
+## Dependencies
+
+![Dependencies tree](http://i.imgur.com/kkiGzsZ.png)
+
+To make this library, I had to code up eleven other libraries (so far):
+
+* [array-pull-all-with-glob](https://github.com/code-and-send/array-pull-all-with-glob)
+* [detect-is-it-html-or-xhtml](https://github.com/code-and-send/detect-is-it-html-or-xhtml)
+* [posthtml-ast-delete-key](https://github.com/code-and-send/posthtml-ast-delete-key)
+* [posthtml-ast-delete-object](https://github.com/code-and-send/posthtml-ast-delete-object)
+* [posthtml-ast-get-object](https://github.com/code-and-send/posthtml-ast-get-object)
+* [posthtml-ast-get-values-by-key](https://github.com/code-and-send/posthtml-ast-get-values-by-key)
+* [posthtml-ast-is-empty](https://github.com/code-and-send/posthtml-ast-is-empty)
+* [string-extract-class-names](https://github.com/code-and-send/string-extract-class-names)
+* [posthtml-ast-loose-compare](https://github.com/code-and-send/posthtml-ast-loose-compare)
+* [posthtml-ast-compare](https://github.com/code-and-send/posthtml-ast-compare)
+* [posthtml-ast-contains-only-empty-space](https://github.com/code-and-send/posthtml-ast-contains-only-empty-space)
+
+By the way, the libraries that have `posthtml` in their name are not PostHTML plugins, but rather libraries to work with [posthtml-parser](https://github.com/posthtml/posthtml-parser)-parsed abstract syntax trees (AST's). AST is a fancy word, basically it's an array full of nested arrays, plain objects and strings.
+
+I chose PostHTML parser/renderer because I'm using PostHTML itself in daily client work.
+
 ## Contributing & testing
 
 All contributions welcome. This library uses [Standard JavaScript](https://github.com/feross/standard) notation. See `test.js`. It's using [AVA](https://github.com/avajs/ava).
@@ -98,3 +120,7 @@ If you see anything incorrect whatsoever, [raise an issue](https://github.com/co
 ## Licence
 
 MIT © [Roy Reveltas](https://github.com/revelt)
+
+---
+
+¹ Sorry I couldn't help it.
