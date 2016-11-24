@@ -1,7 +1,7 @@
 {
   "name": "email-remove-unused-css",
   "version": "1.0.0",
-  "description": "remove unused CSS in HTML's head styles and/or body, inline",
+  "description": "Remove unused CSS from styles in HTML HEAD and/or inline within BODY",
   "main": "index.js",
   "scripts": {
     "test": "ava"

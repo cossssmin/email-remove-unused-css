@@ -50,9 +50,9 @@ function prependToEachElIfMissing (arr, thing) {
 /**
  * removeFromTheFrontOfEachEl - removes characters from the front of other strings
  *
- * @param  {Array|String} arr    input
- * @param  {String} whatToRemove string what to remove
- * @return {type}                returning the same type of what was input
+ * @param  {Array|String} arr       input
+ * @param  {String} whatToRemove    string what to remove
+ * @return {WhateverTypeWasInput}   returning the same type of what was input
  */
 function removeFromTheFrontOfEachEl (arr, whatToRemove) {
   if (!Array.isArray(arr) || !_.isString(whatToRemove)) {
@@ -85,8 +85,9 @@ function clean (input) {
  * emailRemoveUnusedCss - main function
  *
  * @param  {String} htmlContentsAsString    input, html code in a string format
- * @param  {type}   settings                optional settings object
- * @return {type}                           output, html code in a string format
+ * @param  {Object} settings                optional settings object
+ * @return {Array}                          * returned html code in a string format in array's elem. [0]
+ *                                          * the other info in array's elem. [1]
  */
 function emailRemoveUnusedCss (htmlContentsAsString, settings) {
   var whitelist
@@ -260,7 +261,7 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     htmlAstObj = del(htmlAstObj, {tag: 'style', attrs: {type: 'text/css'}}, true)
 
     //
-    // FINALE. Write out to ssd.
+    // FINALE. Prep and return
     //
 
     // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
