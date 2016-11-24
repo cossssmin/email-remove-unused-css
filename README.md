@@ -24,7 +24,7 @@ emailRemoveUnusedCss (
 );
 ```
 
-The second argument, settings object, is entirely optional.
+The second argument, the settings object, is entirely optional.
 
 ### settings.whitelist
 
@@ -51,11 +51,11 @@ emailRemoveUnusedCss(html,
 
 ### settings.noThrowing
 
-The parser used for HTML part is quite forgiving, it takes some creativity to make it throw error. For example, tags can be missing and it will try to fill in missing ones. But it will throw if it encounters, for example, `<html<html<html<html xmlns="http://www.w3.org/1999/xhtml">`.
+The parser used for HTML part is quite forgiving; it takes some creativity to make it throw an error. For example, tags can be missing, and it will try to fill in missing ones. But it will throw if it encounters, for example, `<html<html<html<html xmlns="http://www.w3.org/1999/xhtml">`.
 
-The parser for CSS parts is very sensitive and will throw error if it encounters even a missing curly brace.
+The parser for CSS parts is very sensitive and will throw an error if it encounters even a missing curly brace.
 
-When either parser throws error, this library throws the same error. This might or might not be what you want. In latter case pass `{noThrowing = true}` and this library will kindly return a string `the input code has problems, please check it` and keep that dirty secret without throwing.
+When either parser throws an error, this library throws the same error. This might or might not be what you want. In latter case pass `{noThrowing = true}` and this library will kindly return a string `the input code has problems, please check it` and keep that dirty secret without throwing.
 
 ```js
 var html = '<html<html<html<html xmlns="http://www.w3.org/1999/xhtml">'
@@ -80,13 +80,13 @@ console.log(newHTML[0]) // remember result will come in an array's first element
 
 ## Contributing & testing
 
-All contributions welcome. This library uses [Standard JavaScript](https://github.com/feross/standard) notation. See `test.js`. It's very minimalistic testing setup using [AVA](https://github.com/avajs/ava).
+All contributions welcome. This library uses [Standard JavaScript](https://github.com/feross/standard) notation. See `test.js`. It's using [AVA](https://github.com/avajs/ava).
 
 ```bash
 npm test
 ```
 
-If you see anything incorrect whatsoever, [raise an issue](https://github.com/code-and-send/email-remove-unused-css/issues). PR's welcome too.
+If you see anything incorrect whatsoever, [raise an issue](https://github.com/code-and-send/email-remove-unused-css/issues), or even better, fork, fix it and file a pull request.
 
 ## Licence
 
