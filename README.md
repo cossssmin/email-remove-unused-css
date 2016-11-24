@@ -19,9 +19,16 @@ emailRemoveUnusedCss (
   htmlContentsAsString,     // AST tree, or object or array or whatever. Can be deeply-nested
   {
     whitelist: ['.class-1', '#id-1', '.module-*'],   // classes/id's you want to whitelist
-    noThrowing: false                                // should this lib throw when it's parser throws?
+    noThrowing: false                                // should this lib throw when its parser throws?
   }
 );
+// => [
+//      cleanedHtmlAsString,     << string of (likely amended) input code
+//        {
+//          deletedFromHead: [], << array of what was deleted from HEAD
+//          deletedFromBody: []  << array of what was deleted from BODY
+//        }
+//    ]
 ```
 
 The second argument, the settings object, is entirely optional.
