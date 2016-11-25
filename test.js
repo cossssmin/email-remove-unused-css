@@ -328,6 +328,134 @@ test('01.05 - multiple levels of media queries cleaned', t => {
     '01.05')
 })
 
+test('01.06 - empty media queries removed', t => {
+  t.is(
+    minify(
+      remove('\
+<!DOCTYPE html>\
+<head>\
+  <style type="text/css">\
+    @media (max-width: 600px) {\
+      @media (max-width: 200px) {\
+        .head-only-class-1{font-size: 10px !important;}\
+      }\
+      @media (max-width: 100px) {\
+        .head-only-class-2{font-size: 10px !important;}\
+      }\
+    }\
+  </style>\
+  <title>zzzz</title>\
+  <style type="text/css">\
+  @media (max-width: 600px) {\
+    @media (max-width: 200px) {\
+      .head-only-class-3{font-size: 10px !important;}\
+    }\
+    @media (max-width: 100px) {\
+      .head-only-class-4{font-size: 10px !important;}\
+    }\
+  }\
+  </style>\
+</head>\
+<body>\
+  <table id="">\
+    <tr>\
+      <td class="">\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'\
+<!DOCTYPE html>\
+<head>\
+  <title>zzzz</title>\
+</head>\
+<body>\
+  <table>\
+    <tr>\
+      <td>\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.06')
+})
+
+test('01.07 - style tags are outside HEAD', t => {
+  t.is(
+    minify(
+      remove('\
+<!DOCTYPE html>\
+<style type="text/css">\
+@media (max-width: 600px) {\
+  @media (max-width: 200px) {\
+    .head-only-class-1{font-size: 10px !important;}\
+  }\
+  @media (max-width: 100px) {\
+    .head-only-class-2{font-size: 10px !important;}\
+  }\
+}\
+</style>\
+<head>\
+  <title>zzzz</title>\
+</head>\
+<body>\
+<style type="text/css">\
+@media (max-width: 600px) {\
+  @media (max-width: 200px) {\
+    .head-only-class-3{font-size: 10px !important;}\
+  }\
+  @media (max-width: 100px) {\
+    .head-only-class-4{font-size: 10px !important;}\
+  }\
+}\
+</style>\
+  <table id="">\
+    <tr>\
+      <td class="">\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'\
+<!DOCTYPE html>\
+<head>\
+  <title>zzzz</title>\
+</head>\
+<body>\
+  <table>\
+    <tr>\
+      <td>\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.07')
+})
+
 // ==============================
 // 2. HTML/XHTML issues
 // ==============================

@@ -14,6 +14,7 @@ var deleteKey = require('posthtml-ast-delete-key')
 var findTag = require('posthtml-ast-get-object')
 var pullAllWithGlob = require('array-pull-all-with-glob')
 var detect = require('detect-is-it-html-or-xhtml')
+var compare = require('posthtml-ast-compare')
 
 var i, len
 
@@ -84,6 +85,7 @@ function clean (input) {
   input = del(input, {type: 'stylesheet'}, true)
   input = del(input, {class: ''})
   input = del(input, {id: ''})
+  input = del(input, {rules: ''})
   return input
 }
 
@@ -211,7 +213,7 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
       // finally, write over:
       var erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', new_oo)
 
-      while (!_.isEqual(erasedTest, clean(erasedTest))) {
+      while (!compare(erasedTest, clean(erasedTest)) || !compare(clean(erasedTest), erasedTest)) {
         erasedTest = clean(erasedTest)
       }
 
