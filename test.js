@@ -40,7 +40,7 @@ test('01.01 - removes classes and id\'s from HTML5', t => {
 </html>\
 '
       )[0],
-      {collapseWhitespace: false, minifyCSS: true}
+      {collapseWhitespace: true, minifyCSS: true}
     ),
     minify(
 '\
@@ -71,7 +71,7 @@ test('01.01 - removes classes and id\'s from HTML5', t => {
 </body>\
 </html>\
 ',
-      {collapseWhitespace: false, minifyCSS: true}
+      {collapseWhitespace: true, minifyCSS: true}
     ),
     '01.01')
 })
@@ -108,7 +108,7 @@ test('01.02 - deletes blank class/id attrs and empty because of deletion', t => 
 </html>\
 '
       )[0],
-      {collapseWhitespace: false, minifyCSS: true}
+      {collapseWhitespace: true, minifyCSS: true}
     ),
     minify(
 '\
@@ -139,9 +139,193 @@ test('01.02 - deletes blank class/id attrs and empty because of deletion', t => 
 </body>\
 </html>\
 ',
-      {collapseWhitespace: false, minifyCSS: true}
+      {collapseWhitespace: true, minifyCSS: true}
     ),
     '01.02')
+})
+
+test('01.03 - class present in both head and body, but head has it joined with nonexistent class', t => {
+  t.is(
+    minify(
+      remove('\
+<!DOCTYPE html>\
+<html lang="en">\
+<head>\
+  <style type="text/css">\
+    .real-class-1#head-only-class-1, #head-only-class-2.real-class-1[lang|en]{width:100% !important;}\
+  </style>\
+</head>\
+<body>\
+  <table class="real-class-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
+    <tr>\
+      <td class="real-class-1">\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'\
+<!DOCTYPE html>\
+<html lang="en">\
+<head>\
+</head>\
+<body>\
+  <table width="100%" border="0" cellpadding="0" cellspacing="0">\
+    <tr>\
+      <td>\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.03')
+})
+
+test('01.04 - multiple style tags recognised and transformed', t => {
+  t.is(
+    minify(
+      remove('\
+<!DOCTYPE html>\
+<html lang="en">\
+<head>\
+  <style type="text/css">\
+    .real-class-1#head-only-class-1[lang|en]{width:100% !important;}\
+    #real-id-1.head-only-class-1:hover{display: block !important;}\
+    .head-only-class-2[lang|en]{width: 100% !important;}\
+    #real-id-1{font-size: 10px !important;}\
+  </style>\
+  <title>zzzz</title>\
+  <style type="text/css">\
+    .real-class-1#head-only-class-1[lang|en]{width:100% !important;}\
+    #real-id-1.head-only-class-1:hover{display: block !important;}\
+    .head-only-class-3[lang|en]{width: 100% !important;}\
+    div .real-class-1 a:hover {width: 50%;}\
+  </style>\
+</head>\
+<body>\
+  <table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
+    <tr>\
+      <td class="real-class-1">\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'\
+<!DOCTYPE html>\
+<html lang="en">\
+<head>\
+  <style type="text/css">\
+    #real-id-1{font-size: 10px !important;}\
+  </style>\
+  <title>zzzz</title>\
+  <style type="text/css">\
+    div .real-class-1 a:hover {width: 50%;}\
+  </style>\
+</head>\
+<body>\
+  <table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
+    <tr>\
+      <td class="real-class-1">\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.04')
+})
+
+test('01.05 - multiple levels of media queries cleaned', t => {
+  t.is(
+    minify(
+      remove('\
+<!DOCTYPE html>\
+<head>\
+  <style type="text/css">\
+    @media (max-width: 600px) {\
+      .real-class-1#head-only-class-1[lang|en]{width:100% !important;}\
+      #real-id-1.head-only-class-1:hover{display: block !important;}\
+      .head-only-class-2[lang|en]{width: 100% !important;}\
+      @media (max-width: 200px) {\
+        #real-id-1{font-size: 10px !important;}\
+      }\
+      @media (max-width: 100px) {\
+        .head-only-class-1{font-size: 10px !important;}\
+      }\
+    }\
+  </style>\
+  <title>zzzz</title>\
+  <style type="text/css">\
+    .real-class-1#head-only-class-1[lang|en]{width:100% !important;}\
+    #real-id-1.head-only-class-1:hover{display: block !important;}\
+    .head-only-class-3[lang|en]{width: 100% !important;}\
+    div .real-class-1 a:hover {width: 50%;}\
+  </style>\
+</head>\
+<body>\
+  <table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
+    <tr>\
+      <td class="real-class-1">\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'\
+<!DOCTYPE html>\
+<head>\
+  <style type="text/css">\
+    @media (max-width: 600px) {\
+      @media (max-width: 200px) {\
+        #real-id-1{font-size: 10px !important;}\
+      }\
+    }\
+  </style>\
+  <title>zzzz</title>\
+  <style type="text/css">\
+    div .real-class-1 a:hover {width: 50%;}\
+  </style>\
+</head>\
+<body>\
+  <table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
+    <tr>\
+      <td class="real-class-1">\
+        <img src="spacer.gif">\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>\
+',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.05')
 })
 
 // ==============================

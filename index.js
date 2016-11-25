@@ -21,6 +21,16 @@ var i, len
 // F U N C T I O N S
 
 function existy (x) { return x != null }
+function truthy (x) { return (x !== false) && existy(x) }
+function aContainsB (a, b) {
+  if (!existy(a) || !existy(b)) {
+    return false
+  }
+  if (!truthy(a) || !truthy(b)) {
+    return false
+  }
+  return a.indexOf(b) >= 0
+}
 
 // =========
 
@@ -67,7 +77,6 @@ function removeFromTheFrontOfEachEl (arr, whatToRemove) {
 
 function clean (input) {
   // delete all empty selectors within rules:
-  // erasedWithNoEmpty
   input = del(input, {selectors: ['']})
   input = del(input, {selectors: []})
   input = del(input, {type: 'rule', selectors: ['']})
@@ -223,6 +232,33 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
         allStyleTags[i] = {}
       }
     })
+    // Perform a secondary check, are all classes within <body> present in this cleaned selectors list.
+    // This is necessary to catch classes/id's that were in both <head> and <body> but all their occurencies
+    // in <head> were sandwiched with non-existent classes/id's and therefore deleted.
+    // See test 01.03. Released v1.2.0.
+    var redundantOnes = []
+    var found = true
+    var remainingClassesAndIdsWithinBody = _.uniq(_.pullAll(allClassesAndIdsWithinBody, bodyCssToDelete))
+
+    remainingClassesAndIdsWithinBody.forEach(function (el, i) {
+      found = false
+
+      allStyleTags.forEach(function (el2, i2) {
+        if (Object.keys(el2).length === 0) {
+          found = false
+        } else {
+          if (aContainsB(el2.content[0], el)) {
+            found = true
+          }
+        }
+      })
+      if (!found) {
+        redundantOnes.push(el)
+      }
+    })
+    bodyCssToDelete = bodyCssToDelete.concat(redundantOnes)
+
+    // write
     htmlAstObj = findTag(htmlAstObj, {tag: 'style'}, allStyleTags)
 
     //
