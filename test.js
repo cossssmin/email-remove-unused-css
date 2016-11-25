@@ -767,12 +767,12 @@ test('08.04 - suppressing HTML throwing by settings.noThrowing = true', t => {
 
 // ==============================
 
-// TODO
+// Covered:
 // [x] Test for missing stuff in the inputs
 // [x] Test for wrong input type
 // [x] Test info object
 // [x] Test whitelist
-// [ ] Graciously return unpatch-eable instead of throwing when HTML is dirty (see separate case for patched)
+// [x] Graciously return unpatch-eable instead of throwing when HTML is dirty (see separate case for patched)
 // [x] Graciously return unpatch-eable instead of throwing when CSS is dirty (see separate case for patched)
 // [x] Test for HTML/XHTML differences and return correct type
 // [x] Test cases where wrongly closed IMG tags are patched
