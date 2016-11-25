@@ -38,14 +38,12 @@ The second argument, the settings object, is entirely optional.
 Since the main purpose of this library is to clean email HTML, it needs to cater for email code specifics. One of them is that CSS styles will contain fix or hack styles, meant for email software. For example, here are few of them:
 
 ```html
-#outlook a{ padding:0;}
-.ExternalClass, .ReadMsgBody{width:100%;}
-.ExternalClass, .ExternalClass div, .ExternalClass font, .ExternalClass p, .ExternalClass span, .ExternalClass td{ line-height:100%;}
+#outlook a { padding:0; }
+.ExternalClass, .ReadMsgBody { width:100%; }
+.ExternalClass, .ExternalClass div, .ExternalClass font, .ExternalClass p, .ExternalClass span, .ExternalClass td { line-height:100%; }
 ```
 
-Obviously, you will not be using the above classes and id's in the `<body>` of your HTML code, what means it will get removed because it is present in `<head>` only.
-
-To avoid that, pass the classes and id's to whitelist in a settings object, in a second argument:
+Obviously, you will not be using the above classes and id's in the `<body>` of your HTML code, what means they will get removed — they are present in `<head>` only. To avoid that, pass the classes and id's in the _whitelist_ key's value, as an array:
 
 ```js
 var html = '<!DOCTYPE html>...'
@@ -109,7 +107,7 @@ I chose PostHTML parser/renderer because I'm using PostHTML itself in daily clie
 
 ## Contributing & testing
 
-All contributions welcome. This library uses [Standard JavaScript](https://github.com/feross/standard) notation. See `test.js`. It's using [AVA](https://github.com/avajs/ava).
+All and any contributions are welcome. This library uses [Standard JavaScript](https://github.com/feross/standard) notation. See `test.js`. It's using [AVA](https://github.com/avajs/ava).
 
 ```bash
 npm test
