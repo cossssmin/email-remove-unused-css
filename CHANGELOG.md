@@ -2,6 +2,16 @@
 
 ---
 
+# v.1.4.0
+
+> 2016-Nov-28
+
+API change, or rather supplement. Adding all the styles from `body` and all the styles from `head` into the returned object.
+
+It's necessary for upcoming front-end which will need to give option to move classes in and out of whitelist via GUI. Without all classes among the returned keys, it would be impossible to add to whitelist via GUI those classes that are not in yet.
+
+---
+
 # v.1.3.0
 
 > 2016-Nov-25

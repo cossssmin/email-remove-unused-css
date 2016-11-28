@@ -25,6 +25,8 @@ emailRemoveUnusedCss (
 // => [
 //      cleanedHtmlAsString,     << string of (likely amended) input code
 //        {
+//          allInHead:       [], << deduped array of all classes and id's in HEAD
+//          allInBody:       [], << deduped array of all classes and id's in BODY
 //          deletedFromHead: [], << array of what was deleted from HEAD
 //          deletedFromBody: []  << array of what was deleted from BODY
 //        }

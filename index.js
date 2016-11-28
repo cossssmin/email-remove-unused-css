@@ -157,6 +157,7 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     })
 
     allClassesAndIdsWithinHead = _.uniq(_.flattenDeep(allClassesAndIdsWithinHead, ''))
+    var unwhitelistedAllClassesAndIdsWithinHead = _.clone(allClassesAndIdsWithinHead)
     allClassesAndIdsWithinHead = pullAllWithGlob(allClassesAndIdsWithinHead, whitelist)
 
     //
@@ -175,6 +176,7 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     })
     allIdsWithinBodyRaw = prependToEachElIfMissing(_.without(_.flattenDeep(allIdsWithinBodyRaw), ''), '#')
     var allClassesAndIdsWithinBody = allClassesWithinBodyRawContentsArray.concat(allIdsWithinBodyRaw)
+    var unwhitelistedAllClassesAndIdsWithinBody = _.clone(allClassesAndIdsWithinBody)
     allClassesAndIdsWithinBody = pullAllWithGlob(allClassesAndIdsWithinBody, whitelist)
 
     //
@@ -308,6 +310,8 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // console.log('toBeReturned = ' + toBeReturned)
 
     return [toBeReturned, {
+      allInHead: unwhitelistedAllClassesAndIdsWithinHead,
+      allInBody: unwhitelistedAllClassesAndIdsWithinBody,
       deletedFromHead: headCssToDelete,
       deletedFromBody: bodyCssToDelete
     }]

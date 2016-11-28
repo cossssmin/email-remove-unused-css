@@ -857,6 +857,64 @@ test('06.02 - returned correct info object, body content + missing opening TR', 
     '06.02')
 })
 
+test('06.03 - returns array of all classes, without whitelisting them', t => {
+  t.deepEqual(
+    remove('\
+<!DOCTYPE html>\
+<html>\
+<head>\
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">\
+  <title>Tile</title>\
+  <style type="text/css">\
+    div.non-existent-class{display: block;}\
+    table#other div#non-existent-id{width:100%; display: inline-block;}\
+  </style>\
+</head>\
+<body>\
+<table class="body-only-class-1 body-only-class-2" width="100%" border="0" cellpadding="0" cellspacing="0">\
+  <tr>\
+    <td>\
+      <img src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz">\
+      <br><br>\
+      <hr>\
+      <br><br>\
+',
+      {
+        whitelist: ['.non-existent-*', '#other*', '#non-existent-*', '.body-only-*']
+      }
+    )[1].allInHead,
+    ['.non-existent-class', '#other', '#non-existent-id'],
+    '06.03.01')
+
+  t.deepEqual(
+    remove('\
+<!DOCTYPE html>\
+<html>\
+<head>\
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">\
+  <title>Tile</title>\
+  <style type="text/css">\
+    div.non-existent-class{display: block;}\
+    table#other div#non-existent-id{width:100%; display: inline-block;}\
+  </style>\
+</head>\
+<body>\
+<table class="body-only-class-1 body-only-class-2" width="100%" border="0" cellpadding="0" cellspacing="0">\
+  <tr>\
+    <td>\
+      <img src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz">\
+      <br><br>\
+      <hr>\
+      <br><br>\
+',
+      {
+        whitelist: ['.non-existent-*', '#other*', '#non-existent-*', '.body-only-*']
+      }
+    )[1].allInBody,
+    ['.body-only-class-1', '.body-only-class-2'],
+    '06.03.02')
+})
+
 // ==============================
 // 7. Whitelist
 // ==============================
@@ -989,6 +1047,72 @@ test('07.02 - some removed, some whitelisted', t => {
     '07.02')
 })
 
+test('07.03 - case of whitelisting everything', t => {
+  t.is(
+    minify(
+      remove('\
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" />\
+<html xmlns="http://www.w3.org/1999/xhtml">\
+<head>\
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />\
+  <title>Tile</title>\
+  <style type="text/css">\
+    .module-1{display: none !important;}\
+    .module-2{display: none !important;}\
+    .module-3{display: none !important;}\
+    .module-zzzzkldfjglfjhlfjlhfglj{display: none !important;}\
+    .head-only-class-1 a.module-94:hover{width: 100% !important;}\
+    #head-only-id-1[lang|en]{width: 100% !important;}\
+  </style>\
+</head>\
+<body>\
+<table class="module-92" width="100%" border="0" cellpadding="0" cellspacing="0">\
+  <tr class="module-93 body-only-class-1">\
+    <td id="body-only-id-1" class="module-94 module-lkfjgldhglktjja">\
+      <img class="module-91" src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz" />\
+    </td>\
+  </tr>\
+</table>\
+</body>\
+</html>\
+      ',
+        {
+          whitelist: ['*']
+        }
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify('\
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" />\
+<html xmlns="http://www.w3.org/1999/xhtml">\
+<head>\
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />\
+  <title>Tile</title>\
+  <style type="text/css">\
+    .module-1{display: none !important;}\
+    .module-2{display: none !important;}\
+    .module-3{display: none !important;}\
+    .module-zzzzkldfjglfjhlfjlhfglj{display: none !important;}\
+    .head-only-class-1 a.module-94:hover{width: 100% !important;}\
+    #head-only-id-1[lang|en]{width: 100% !important;}\
+  </style>\
+</head>\
+<body>\
+<table class="module-92" width="100%" border="0" cellpadding="0" cellspacing="0">\
+  <tr class="module-93 body-only-class-1">\
+    <td id="body-only-id-1" class="module-94 module-lkfjgldhglktjja">\
+      <img class="module-91" src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz" />\
+    </td>\
+  </tr>\
+</table>\
+</body>\
+</html>\
+',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '07.03')
+})
+
 // ==============================
 // 8. Make the parser throw and test that. Test both HTML and CSS parse throwing separately of course.
 // ==============================
@@ -1082,7 +1206,8 @@ test('08.04 - suppressing HTML throwing by settings.noThrowing = true', t => {
 // Covered:
 // [x] Test for missing stuff in the inputs
 // [x] Test for wrong input type
-// [x] Test info object
+// [x] Test info object, what's deleted
+// [x] Test info object, does it return all original selectors
 // [x] Test whitelist
 // [x] Graciously return unpatch-eable instead of throwing when HTML is dirty (see separate case for patched)
 // [x] Graciously return unpatch-eable instead of throwing when CSS is dirty (see separate case for patched)
