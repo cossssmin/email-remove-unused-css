@@ -48,7 +48,7 @@
     "string-extract-class-names": "^3.0.0"
   },
   "devDependencies": {
-    "ava": "^0.17.0",
+    "ava": "*",
     "html-minifier": "^3.2.2"
   },
   "ava": {
