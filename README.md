@@ -10,6 +10,8 @@
 [![bitHound Dev Dependencies][dev-img]][dev-url]
 [![Downloads/Month][downloads-img]][downloads-url]
 
+See plugin for [gulp](https://github.com/code-and-send/email-remove-unused-css/). Others are coming.
+
 ## Install
 
 ```bash
