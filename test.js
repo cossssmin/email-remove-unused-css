@@ -456,6 +456,302 @@ test('01.07 - style tags are outside HEAD', t => {
     '01.07')
 })
 
+// GitHub issue #3
+// https://github.com/code-and-send/email-remove-unused-css/issues/3
+test('01.08 - removes media query together with the whole style tag', t => {
+  t.is(
+    minify(
+      remove(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+<style>\
+@media screen {\
+  ._text-color.black {\
+    color:  black;\
+  }\
+}\
+</style></head>\
+<body>\
+</body>\
+</html>'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+</head>\
+<body>\
+</body>\
+</html>',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.08.01')
+  t.is(
+    minify(
+      remove(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+<style>\
+@media screen {\
+  ._text-color.black {\
+    color:  black;\
+  }\
+}\
+</style></head>\
+<body class="_text-color  black">\
+zzz\
+</body>\
+</html>'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+<style>\
+@media screen {\
+  ._text-color.black {\
+    color:  black;\
+  }\
+}\
+</style></head>\
+<body class="_text-color  black">\
+zzz\
+</body>\
+</html>',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.08.02')
+})
+
+test('01.09 - removes three media queries together with the style tags', t => {
+  t.is(
+    minify(
+      remove(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<style>\
+@media screen {\
+  #_something-here#green {\
+    color:  green;\
+    display: block;\
+  }\
+}\
+</style>\
+<meta name="viewport" content="width=device-width">\
+<style>\
+@media screen {\
+  ._something-else.red {\
+    color:  red;\
+  }\
+}\
+</style>\
+<title>test</title>\
+<style>\
+@media screen {\
+  ._text-color.black {\
+    color:  black;\
+  }\
+}\
+</style></head>\
+<body class="black">\
+</body>\
+</html>'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+</head>\
+<body>\
+</body>\
+</html>',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.09')
+})
+
+test('01.10 - removes last styles together with the whole style tag', t => {
+  t.is(
+    minify(
+      remove(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+<style>\
+._text-color.black {\
+  color:  black;\
+}\
+</style></head>\
+<body>\
+</body>\
+</html>'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+</head>\
+<body>\
+</body>\
+</html>',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.10')
+})
+
+test('01.11 - media query with asterisk', t => {
+  t.is(
+    minify(
+      remove(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+<style>\
+  @media * {\
+    ._text-color.black {\
+      color:  black;\
+    }\
+  }\
+</style>\
+</head>\
+<body>\
+</body>\
+</html>'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+</head>\
+<body>\
+</body>\
+</html>',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.11')
+})
+
+test('01.12 - complex media query #1', t => {
+  t.is(
+    minify(
+      remove(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+<style>\
+  @media tv and (min-width: 700px) and (orientation: landscape) {\
+    ._text-color.black {\
+      color:  black;\
+    }\
+  }\
+</style>\
+</head>\
+<body class="black">\
+</body>\
+</html>'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+</head>\
+<body>\
+</body>\
+</html>',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.12')
+})
+
+test('01.13 - complex media query #2', t => {
+  t.is(
+    minify(
+      remove(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+<style>\
+  @media (min-width: 700px), handheld and (orientation: landscape) {\
+    ._text-color.black {\
+      color:  black;\
+    }\
+  }\
+</style>\
+</head>\
+<body class="black">\
+</body>\
+</html>'
+      )[0],
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    minify(
+'<!doctype html>\
+<html>\
+<head>\
+<meta charset="utf-8">\
+<meta name="viewport" content="width=device-width">\
+<title>test</title>\
+</head>\
+<body>\
+</body>\
+</html>',
+      {collapseWhitespace: true, minifyCSS: true}
+    ),
+    '01.13')
+})
+
 // ==============================
 // 2. HTML/XHTML issues
 // ==============================
@@ -525,28 +821,27 @@ test('02.03 - nothing to remove, respects XHTML images within', t => {
   t.is(
     minify(
       remove('\
-      <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\
-      <html xmlns="http://www.w3.org/1999/xhtml">\
-      <head>\
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />\
-        <title>Tile</title>\
-      </head>\
-      <body>\
-      <table width="100%" border="0" cellpadding="0" cellspacing="0">\
-        <tr>\
-          <td>\
-            <img src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz"/>\
-          </td>\
-        </tr>\
-      </table>\
-      </body>\
-      </html>\
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\
+<html xmlns="http://www.w3.org/1999/xhtml">\
+<head>\
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />\
+  <title>Tile</title>\
+</head>\
+<body>\
+<table width="100%" border="0" cellpadding="0" cellspacing="0">\
+  <tr>\
+    <td>\
+      <img src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz"/>\
+    </td>\
+  </tr>\
+</table>\
+</body>\
+</html>\
 '
       )[0],
       {collapseWhitespace: true, minifyCSS: true}
     ),
-    minify(
-'\
+    minify('\
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"\ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\
 <html xmlns="http://www.w3.org/1999/xhtml">\
 <head>\

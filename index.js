@@ -33,6 +33,22 @@ function aContainsB (a, b) {
   return a.indexOf(b) >= 0
 }
 
+/**
+ * nonEmpty - tells, is input empty thing or not
+ *
+ * @param  {Array||PlainObject||String}  input
+ * @return {Boolean}                     is it empty or not
+ */
+function nonEmpty (input) {
+  if (_.isArray(input) || _.isString(input)) {
+    return input.length > 0
+  } else if (_.isPlainObject(input)) {
+    return Object.keys(input).length > 0
+  } else {
+    return false
+  }
+}
+
 // =========
 
 /**
@@ -195,25 +211,26 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // PART IV. Delete classes from <head>
     //
 
+    // console.log('allStyleTags = ' + JSON.stringify(allStyleTags, null, 4))
     allStyleTags.forEach(function (el, i) {
       var parsedCSS = css.parse(el.content[0])
       var allSelectors = getAllValuesByKey(parsedCSS, 'selectors')
-      var new_oo = _.clone(allSelectors)
-      new_oo.forEach(function (elem1, index1) {
+      var allSelectorsCopy = _.clone(allSelectors)
+      allSelectorsCopy.forEach(function (elem1, index1) {
         elem1.forEach(function (elem2, index2) {
           for (var i = 0, len = headCssToDelete.length; i < len; i++) {
-            if (_.includes(extract(new_oo[index1][index2]), headCssToDelete[i])) {
-              new_oo[index1][index2] = ''
+            if (_.includes(extract(allSelectorsCopy[index1][index2]), headCssToDelete[i])) {
+              allSelectorsCopy[index1][index2] = ''
             }
           }
         })
       })
 
-      new_oo.forEach(function (el, i) {
-        new_oo[i] = _.without(new_oo[i], '')
+      allSelectorsCopy.forEach(function (el, i) {
+        allSelectorsCopy[i] = _.without(allSelectorsCopy[i], '')
       })
       // finally, write over:
-      var erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', new_oo)
+      var erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', allSelectorsCopy)
 
       while (!compare(erasedTest, clean(erasedTest)) || !compare(clean(erasedTest), erasedTest)) {
         erasedTest = clean(erasedTest)
@@ -221,7 +238,7 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
 
       var stringifiedErasedTest
 
-      if (existy(erasedTest) && (Object.keys(erasedTest).length !== 0)) {
+      if (existy(erasedTest) && nonEmpty(erasedTest.stylesheet)) {
         stringifiedErasedTest = '\n' + css.stringify(erasedTest) + '\n'
       } else {
         // assign manually because css.stringify doesn't accept "{}"

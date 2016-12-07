@@ -2,6 +2,18 @@
 
 ---
 
+# v.1.5.0
+
+> 2016-Dec-07
+
+Fixed:
+
+* [Issue #3](https://github.com/code-and-send/email-remove-unused-css/issues/3). Thanks to Steven Vachon for flagging this. The root cause was I had set too loose barriers for the styles coming into the CSS renderer. When style tag had only media query and when both were meant to be deleted, CSS renderer _threw_ because of the empty content. I added some conditional checks and now to-be-deleted empty media queries bypass CSS renderer completely.
+
+New tests added: 01.08, 01.09, 01.10, 01.11, 01.12, 01.13 to cover all the newly-discovered cases.
+
+---
+
 # v.1.4.0
 
 > 2016-Nov-28
