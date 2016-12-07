@@ -21,27 +21,56 @@ $ npm install --save email-remove-unused-css
 ## API
 
 ```js
-emailRemoveUnusedCss (
-  htmlContentsAsString,     // AST tree, or object or array or whatever. Can be deeply-nested
-  {
-    whitelist: ['.class-1', '#id-1', '.module-*'],   // classes/id's you want to whitelist
-    noThrowing: false                                // should this lib throw when its parser throws?
-  }
-);
-// => [
-//      cleanedHtmlAsString,     << string of (likely amended) input code
-//        {
-//          allInHead:       [], << deduped array of all classes and id's in HEAD
-//          allInBody:       [], << deduped array of all classes and id's in BODY
-//          deletedFromHead: [], << array of what was deleted from HEAD
-//          deletedFromBody: []  << array of what was deleted from BODY
-//        }
-//    ]
+emailRemoveUnusedCss(htmlContentsAsString, [options])
 ```
 
-The second argument, the settings object, is entirely optional.
+### API - Input
 
-### settings.whitelist
+Input argument         | Type    | Obligatory? | Description
+-----------------------|---------|-------------|--------------------
+`htmlContentsAsString` | String  | yes^        | HTML code as string
+options object         | Object  | no          | Any options, as a plain object, see below
+
+For example,
+
+```js
+var html = '<html>zzz</html><body class="class-1">zzz</body>'
+var result = emailRemoveUnusedCss(
+  html,
+  {
+    whitelist: ['.class-1', '#id-1', '.module-*'],
+    noThrowing: false // you can omit in such case because it's false by default
+  }
+)
+console.log('result = ' + JSON.stringify(result, null, 4))
+```
+
+### API - Input - Options object
+
+Optionally, you can pass the options array:
+
+Options object's key  | Type    | Example                            | Description
+----------------------|---------|------------------------------------|-----------------
+`whitelist`           | Array   | ['.class-1', '#id-1', '.module-*'] | List all classes or id's you want this library to ignore
+`noThrowing`          | Boolean | true                               | Should this lib throw when its parser throws?
+
+### API - Output array
+
+Position | Type    | Description
+---------|---------|---------------------------
+`[0]`    | String  | Cleaned HTML as string
+`[1]`    | Object  | Info object
+
+### API - Output array - Info object
+
+Info object's key | Type    | Description
+------------------|---------|-----------------
+`allInHead`       | Array   | Deduped array of all classes and id's in HEAD
+`allInBody`       | Array   | Deduped array of all classes and id's in BODY
+`deletedFromHead` | Array   | Array of what classes/id's were deleted from HEAD
+`deletedFromBody` | Array   | Array of what classes/id's were deleted from BODY
+
+## Input options.whitelist
 
 Since the main purpose of this library is to clean **email** HTML, it needs to cater for email code specifics. One of them is that CSS styles will contain fix or hack styles, meant for email software. For example, here are few of them:
 
@@ -74,7 +103,7 @@ emailRemoveUnusedCss(html,
 // => all class names that begin with ".module-" will not be touched by this library.
 ```
 
-### settings.noThrowing
+## Input options.noThrowing
 
 The parser used for HTML part is quite forgiving; it takes some creativity to make it throw an error. For example, tags can be missing, and it will try to fill in missing ones. But it will throw if it encounters, for example, `<html<html<html<html xmlns="http://www.w3.org/1999/xhtml">`.
 
@@ -93,7 +122,7 @@ emailRemoveUnusedCss(html,
 
 ## Removing unused CSS from web pages & competition
 
-This library is meant to be used on any HTML where there are no external stylesheets and there are no JavaScript which could add or remove classes or id's dynamically.
+This library is meant to be used on any HTML where there are **no external stylesheets** and there is **no JavaScript** which could add or remove classes or id's dynamically.
 
 It's quite rare to find a **web page** that would have no external stylesheets, but 100% of **email newsletters** are like that and this library suits them perfectly.
 
