@@ -31,7 +31,7 @@ Input argument         | Type    | Obligatory? | Description
 `htmlContentsAsString` | String  | yes^        | HTML code as string
 options object         | Object  | no          | Any options, as a plain object, see below
 
-^ If you are passing in parsed AST tree in options, you can pull `null` (or whatever) as first argument. Your parsed AST tree will be used instead.
+^ If you are passing in parsed AST tree in options, you can put `null` (or whatever) as first argument. Your AST tree from options object will be used instead.
 
 For example,
 
