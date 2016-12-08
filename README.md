@@ -31,6 +31,8 @@ Input argument         | Type    | Obligatory? | Description
 `htmlContentsAsString` | String  | yes^        | HTML code as string
 options object         | Object  | no          | Any options, as a plain object, see below
 
+^ If you are passing in parsed AST tree in options, you can pull `null` (or whatever) as first argument. Your parsed AST tree will be used instead.
+
 For example,
 
 ```js
@@ -53,13 +55,14 @@ Options object's key  | Type    | Example                            | Descripti
 ----------------------|---------|------------------------------------|-----------------
 `whitelist`           | Array   | ['.class-1', '#id-1', '.module-*'] | List all classes or id's you want this library to ignore
 `noThrowing`          | Boolean | true                               | Should this lib throw when its parser throws?
+`parsedTree`          | Array   | it's too big to fit here           | Pass in raw, parsed AST tree, **it will override first argument, HTML as string**
 
 ### API - Output array
 
-Position | Type    | Description
----------|---------|---------------------------
-`[0]`    | String  | Cleaned HTML as string
-`[1]`    | Object  | Info object
+Position | Type         | Description
+---------|--------------|---------------------------
+`[0]`    | String|Array | Cleaned HTML as string OR when AST tree is passed in `options.parsedTree`, amended AST tree (array of objects and strings)
+`[1]`    | Object       | Info object
 
 ### API - Output array - Info object
 

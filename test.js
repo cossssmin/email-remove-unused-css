@@ -2,6 +2,8 @@
 'use strict'
 var remove = require('./index.js')
 var minify = require('html-minifier').minify
+var parser = require('posthtml-parser')
+var render = require('posthtml-render')
 import test from 'ava'
 
 // ==============================
@@ -73,11 +75,78 @@ test('01.01 - removes classes and id\'s from HTML5', t => {
 ',
       {collapseWhitespace: true, minifyCSS: true}
     ),
-    '01.01')
+    '01.01.01')
+
+  t.deepEqual(
+    parser(minify(render(remove(
+      null,
+      {
+        parsedTree: parser('\
+  <!DOCTYPE html>\
+  <html lang="en">\
+  <head>\
+    <meta charset="UTF-8">\
+    <title>Dummy HTML</title>\
+    <style type="text/css">\
+      .real-class-1:active, #head-only-id1[whatnot], whatever[lang|en]{width:100% !important;}\
+      #real-id-1:hover{width:100% !important;}\
+    </style>\
+  </head>\
+  <body>\
+    <table id="real-id-1 body-only-id-1" class="body-only-class-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
+      <tr>\
+        <td>\
+          <table width="100%" border="0" cellpadding="0" cellspacing="0">\
+            <tr id="body-only-id-4">\
+              <td id="body-only-id-2 body-only-id-3" class="real-class-1 body-only-class-2">\
+                Dummy content.\
+              </td>\
+            </tr>\
+          </table>\
+        </td>\
+      </tr>\
+    </table>\
+  </body>\
+  </html>\
+  ')
+      }
+    )[0]
+  ), {collapseWhitespace: true, minifyCSS: true})),
+    parser(
+      minify('\
+    <!DOCTYPE html>\
+    <html lang="en">\
+    <head>\
+      <meta charset="UTF-8">\
+      <title>Dummy HTML</title>\
+      <style type="text/css">\
+        .real-class-1:active, whatever[lang|en]{width:100% !important;}\
+        #real-id-1:hover{width:100% !important;}\
+      </style>\
+    </head>\
+    <body>\
+      <table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
+        <tr>\
+          <td>\
+            <table width="100%" border="0" cellpadding="0" cellspacing="0">\
+              <tr>\
+                <td class="real-class-1">\
+                  Dummy content.\
+                </td>\
+              </tr>\
+            </table>\
+          </td>\
+        </tr>\
+      </table>\
+    </body>\
+    </html>\
+    ', {collapseWhitespace: true, minifyCSS: true})
+  ),
+    '01.01.02')
 })
 
 test('01.02 - deletes blank class/id attrs and empty because of deletion', t => {
-  t.deepEqual(
+  t.is(
     minify(
       remove('\
 <!DOCTYPE html>\

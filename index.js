@@ -118,6 +118,7 @@ function clean (input) {
  */
 function emailRemoveUnusedCss (htmlContentsAsString, settings) {
   var whitelist
+  var treeInputMode = false
   if (existy(settings) && existy(settings.whitelist)) {
     whitelist = settings.whitelist
   } else {
@@ -131,16 +132,21 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
 
   if (!Array.isArray(whitelist)) whitelist = []
 
-  if (htmlContentsAsString === null) {
-    return htmlContentsAsString
-  }
-
-  if (!existy(htmlContentsAsString)) {
-    return
-  }
-
-  if (typeof htmlContentsAsString !== 'string') {
-    return htmlContentsAsString
+  var parsedTree
+  if (existy(settings) && existy(settings.parsedTree)) {
+    treeInputMode = true
+    parsedTree = settings.parsedTree
+    htmlContentsAsString = render(treeInputMode)
+  } else {
+    if (htmlContentsAsString === null) {
+      return htmlContentsAsString
+    }
+    if (!existy(htmlContentsAsString)) {
+      return
+    }
+    if (typeof htmlContentsAsString !== 'string') {
+      return htmlContentsAsString
+    }
   }
 
   // identify is it HTML or XHTML, to be used when rendering-back the AST
@@ -158,7 +164,13 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // PART I. Get all styles from within <head>
     //
 
-    var htmlAstObj = parser(htmlContentsAsString)
+    var htmlAstObj
+    if (treeInputMode) {
+      htmlAstObj = parsedTree
+    } else {
+      htmlAstObj = parser(htmlContentsAsString)
+    }
+
     var allStyleTags = findTag(htmlAstObj, {tag: 'style'})
     var allStyleTagSelectors = []
     allStyleTags.forEach(function (el, i) {
@@ -323,8 +335,13 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
 
     // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
 
-    var toBeReturned = render(htmlAstObj, { closingSingleTag: closingSingleTag })
-    // console.log('toBeReturned = ' + toBeReturned)
+    var toBeReturned
+    if (treeInputMode) {
+      toBeReturned = htmlAstObj
+    } else {
+      toBeReturned = render(htmlAstObj, { closingSingleTag: closingSingleTag })
+    }
+    // console.log('toBeReturned = ' + JSON.stringify(toBeReturned, null, 4))
 
     return [toBeReturned, {
       allInHead: unwhitelistedAllClassesAndIdsWithinHead,

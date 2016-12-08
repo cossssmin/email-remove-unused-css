@@ -2,7 +2,17 @@
 
 ---
 
-# v.1.5.0
+# v1.6.0
+
+> 2016-Dec-08
+
+New feature: you can bypass parsing and input the AST tree directly in `options.parsedTree` value. The return will be AST tree as well (instead of string).
+
+Added a new test: 01.01.02.
+
+---
+
+# v1.5.0
 
 > 2016-Dec-07
 
@@ -14,7 +24,7 @@ New tests added: 01.08, 01.09, 01.10, 01.11, 01.12, 01.13 to cover all the newly
 
 ---
 
-# v.1.4.0
+# v1.4.0
 
 > 2016-Nov-28
 
@@ -24,7 +34,7 @@ It's necessary for upcoming front-end which will need to give option to move cla
 
 ---
 
-# v.1.3.0
+# v1.3.0
 
 > 2016-Nov-25
 
@@ -40,7 +50,7 @@ If there are empty media query blocks (already supplied empty or empty because a
 
 ---
 
-# v.1.2.0
+# v1.2.0
 
 > 2016-Nov-25
 
