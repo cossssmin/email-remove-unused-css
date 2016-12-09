@@ -161,7 +161,9 @@ This library is dependent on few other libraries:
 * [posthtml-ast-compare](https://github.com/code-and-send/posthtml-ast-compare)
 * [posthtml-ast-contains-only-empty-space](https://github.com/code-and-send/posthtml-ast-contains-only-empty-space)
 
-By the way, the above libraries that have names which begin with `posthtml-ast-` are tooling libraries to work with [PostHTML-parsed](https://github.com/posthtml/posthtml-parser) AST tree's. They're not PostHTML plugins, but rather real Node (micro)libraries.
+By the way, the libraries that have `posthtml` in their name are not PostHTML plugins, but rather libraries to work with [posthtml-parser](https://github.com/posthtml/posthtml-parser)-parsed abstract syntax trees (AST's). AST is a fancy word, basically it's an array full of nested arrays, plain objects and strings.
+
+I chose PostHTML parser/renderer because I'm using PostHTML itself in daily client work.
 
 ## Testing
 
