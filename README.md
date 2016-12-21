@@ -5,6 +5,7 @@
 > Remove unused CSS from email templates
 
 [![Build Status][travis-img]][travis-url]
+[![Coverage Status][cov-img]][cov-url]
 [![bitHound Overall Score][overall-img]][overall-url]
 [![bitHound Dependencies][deps-img]][deps-url]
 [![bitHound Dev Dependencies][dev-img]][dev-url]
@@ -169,7 +170,7 @@ By the way, the above libraries that have names which begin with `posthtml-ast-`
 $ npm test
 ```
 
-Unit tests use [AVA](https://github.com/avajs/ava) and [JS Standard](https://github.com/feross/standard) notation.
+For unit tests we use [AVA](https://github.com/avajs/ava), [Istanbul CLI](https://github.com/istanbuljs/nyc) and [JS Standard](https://github.com/feross/standard) notation.
 
 ## Contributing
 
@@ -203,6 +204,9 @@ SOFTWARE.
 
 [travis-img]: https://travis-ci.org/code-and-send/email-remove-unused-css.svg?branch=master
 [travis-url]: https://travis-ci.org/code-and-send/email-remove-unused-css
+
+[cov-img]: https://coveralls.io/repos/github/code-and-send/email-remove-unused-css/badge.svg?branch=master
+[cov-url]: https://coveralls.io/github/code-and-send/email-remove-unused-css?branch=master
 
 [overall-img]: https://www.bithound.io/github/code-and-send/email-remove-unused-css/badges/score.svg
 [overall-url]: https://www.bithound.io/github/code-and-send/email-remove-unused-css
