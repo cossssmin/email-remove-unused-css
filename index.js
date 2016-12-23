@@ -15,6 +15,7 @@ var findTag = require('posthtml-ast-get-object')
 var pullAllWithGlob = require('array-pull-all-with-glob')
 var detect = require('detect-is-it-html-or-xhtml')
 var compare = require('posthtml-ast-compare')
+var nonEmpty = require('util-nonempty')
 
 var i, len
 
@@ -22,31 +23,8 @@ var i, len
 // F U N C T I O N S
 
 function existy (x) { return x != null }
-function truthy (x) { return (x !== false) && existy(x) }
 function aContainsB (a, b) {
-  if (!existy(a) || !existy(b)) {
-    return false
-  }
-  if (!truthy(a) || !truthy(b)) {
-    return false
-  }
   return a.indexOf(b) >= 0
-}
-
-/**
- * nonEmpty - tells, is input empty thing or not
- *
- * @param  {Array||PlainObject||String}  input
- * @return {Boolean}                     is it empty or not
- */
-function nonEmpty (input) {
-  if (_.isArray(input) || _.isString(input)) {
-    return input.length > 0
-  } else if (_.isPlainObject(input)) {
-    return Object.keys(input).length > 0
-  } else {
-    return false
-  }
 }
 
 // =========

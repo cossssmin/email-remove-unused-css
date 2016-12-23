@@ -46,7 +46,8 @@
     "posthtml-ast-get-values-by-key": "^1.2.2",
     "posthtml-parser": "^0.2.0",
     "posthtml-render": "^1.0.6",
-    "string-extract-class-names": "^3.0.0"
+    "string-extract-class-names": "^3.0.0",
+    "util-nonempty": "^1.0.1"
   },
   "devDependencies": {
     "ava": "*",
