@@ -56,7 +56,7 @@ Options object's key  | Type    | Example                            | Descripti
 ----------------------|---------|------------------------------------|-----------------
 `whitelist`           | Array   | ['.class-1', '#id-1', '.module-*'] | List all classes or id's you want this library to ignore
 `noThrowing`          | Boolean | true                               | Should this lib throw when its parser throws?
-`parsedTree`          | Array   | it's too big to fit here           | Pass in raw, parsed AST tree, **it will override first argument, HTML as string**
+`parsedTree`          | Array   | it's too big to fit here           | Pass in raw, [parsed](https://www.npmjs.com/package/posthtml-parser) AST tree, **it will override first argument, HTML as string**
 
 ### API - Output array
 
@@ -182,7 +182,7 @@ If you see anything incorrect whatsoever, do [raise an issue](https://github.com
 
 > MIT License (MIT)
 
-> Copyright (c) 2016 Code and Send Ltd, Roy Reveltas
+> Copyright (c) 2017 Code and Send Ltd, Roy Reveltas
 
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
