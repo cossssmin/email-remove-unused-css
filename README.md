@@ -11,7 +11,8 @@
 [![bitHound Dev Dependencies][dev-img]][dev-url]
 [![Downloads/Month][downloads-img]][downloads-url]
 
-See plugin for [gulp](https://github.com/code-and-send/gulp-email-remove-unused-css/). Others are coming.
+Online web app: [EmailComb](https://emailcomb.com)
+Gulp plugin: [gulp-email-remove-unused-css](https://github.com/code-and-send/gulp-email-remove-unused-css/)
 
 ## Install
 
