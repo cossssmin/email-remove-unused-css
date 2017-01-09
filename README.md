@@ -13,6 +13,7 @@
 
 * Online web app: [EmailComb](https://emailcomb.com)
 * Gulp plugin: [gulp-email-remove-unused-css](https://github.com/code-and-send/gulp-email-remove-unused-css/)
+* PostHTML plugin: [posthtml-email-remove-unused-css](https://github.com/code-and-send/posthtml-email-remove-unused-css/)
 
 ## Install
 
