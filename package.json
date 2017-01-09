@@ -1,6 +1,6 @@
 {
   "name": "email-remove-unused-css",
-  "version": "1.10.2",
+  "version": "1.11.0",
   "description": "Remove unused CSS from email templates",
   "main": "index.js",
   "scripts": {
