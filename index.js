@@ -16,6 +16,7 @@ var pullAllWithGlob = require('array-pull-all-with-glob')
 var detect = require('detect-is-it-html-or-xhtml')
 var compare = require('posthtml-ast-compare')
 var nonEmpty = require('util-nonempty')
+var util = require('./util.js')
 
 var i, len
 
@@ -25,47 +26,6 @@ var i, len
 function existy (x) { return x != null }
 function aContainsB (a, b) {
   return a.indexOf(b) >= 0
-}
-
-// =========
-
-/**
- * prependToEachElIfMissing - append dot or whatever in front of each array element if it's missing
- *
- * @param  {Array}  arr    incoming array
- * @param  {String} thing  dot or hash (normally)
- * @return {Array}         array having all its elements "thing" appended
- */
-function prependToEachElIfMissing (arr, thing) {
-  if (!Array.isArray(arr)) {
-    return arr
-  }
-  thing = thing || '.'
-  return arr.map(function (el) {
-    if (_.startsWith(el, String(thing))) {
-      return el
-    } else {
-      return thing + String(el)
-    }
-  })
-}
-
-// =========
-
-/**
- * removeFromTheFrontOfEachEl - removes characters from the front of other strings
- *
- * @param  {Array|String} arr       input
- * @param  {String} whatToRemove    string what to remove
- * @return {WhateverTypeWasInput}   returning the same type of what was input
- */
-function removeFromTheFrontOfEachEl (arr, whatToRemove) {
-  if (!Array.isArray(arr) || !_.isString(whatToRemove)) {
-    return arr
-  }
-  return arr.map(function (el) {
-    return _.trimStart(el, whatToRemove)
-  })
 }
 
 // =========
@@ -174,13 +134,13 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     allClassesWithinBodyRawContentsArray.forEach(function (el, i) {
       allClassesWithinBodyRawContentsArray[i] = el.split(' ')
     })
-    allClassesWithinBodyRawContentsArray = prependToEachElIfMissing(_.without(_.flattenDeep(allClassesWithinBodyRawContentsArray), ''))
+    allClassesWithinBodyRawContentsArray = util.prependToEachElIfMissing(_.without(_.flattenDeep(allClassesWithinBodyRawContentsArray), ''))
 
     var allIdsWithinBodyRaw = getAllValuesByKey(htmlAstObj, 'id')
     allIdsWithinBodyRaw.forEach(function (el, i) {
       allIdsWithinBodyRaw[i] = el.split(' ')
     })
-    allIdsWithinBodyRaw = prependToEachElIfMissing(_.without(_.flattenDeep(allIdsWithinBodyRaw), ''), '#')
+    allIdsWithinBodyRaw = util.prependToEachElIfMissing(_.without(_.flattenDeep(allIdsWithinBodyRaw), ''), '#')
     var allClassesAndIdsWithinBody = allClassesWithinBodyRawContentsArray.concat(allIdsWithinBodyRaw)
     var unwhitelistedAllClassesAndIdsWithinBody = _.clone(allClassesAndIdsWithinBody)
     allClassesAndIdsWithinBody = pullAllWithGlob(allClassesAndIdsWithinBody, whitelist)
@@ -201,14 +161,26 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // PART IV. Delete classes from <head>
     //
 
-    // console.log('allStyleTags = ' + JSON.stringify(allStyleTags, null, 4))
+    var deletedFromHead = _.clone(headCssToDelete)
     allStyleTags.forEach(function (el, i) {
       var parsedCSS = css.parse(el.content[0])
       var allSelectors = getAllValuesByKey(parsedCSS, 'selectors')
       var allSelectorsCopy = _.clone(allSelectors)
       allSelectorsCopy.forEach(function (elem1, index1) {
         elem1.forEach(function (elem2, index2) {
-          for (var i = 0, len = headCssToDelete.length; i < len; i++) {
+          // prepare the deletedFromHead array.
+          // some sandwiched classes/id's can be in multiple places.
+          // One of places can delete a sandwiched class/id, but it might be present in other, legit  locations.
+          // We can't put the deleted class/id into headCssToDelete[] because that would delete them everywhere!
+          // Therefore, sandwiched deleted classes/id's go to separate array, which is later output as "deleted". Technically, it's "deleted at least in one place, not necessarily everywhere".
+          for (i = 0, len = headCssToDelete.length; i < len; i++) {
+            if (_.includes(extract(allSelectorsCopy[index1][index2]), headCssToDelete[i])) {
+              // extract and add about-to-be-deleted classes into headCssToDelete array:
+              // that's missing sandwiched classes
+              deletedFromHead = _.uniq(deletedFromHead.concat(extract(allSelectorsCopy[index1][index2])))
+            }
+          }
+          for (i = 0, len = headCssToDelete.length; i < len; i++) {
             if (_.includes(extract(allSelectorsCopy[index1][index2]), headCssToDelete[i])) {
               allSelectorsCopy[index1][index2] = ''
             }
@@ -286,8 +258,8 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // prep classes:
     for (i = 0, len = allBodyClasses.length; i < len; i++) {
       splitBodyClasses = allBodyClasses[i].split(' ')
-      splitBodyClasses = prependToEachElIfMissing(_.uniq(_.without(splitBodyClasses, '')))
-      allBodyClasses[i] = removeFromTheFrontOfEachEl(_.difference(splitBodyClasses, bodyCssToDelete), '.').join(' ')
+      splitBodyClasses = util.prependToEachElIfMissing(_.uniq(_.without(splitBodyClasses, '')))
+      allBodyClasses[i] = util.unprependToEachElIfPresent(_.difference(splitBodyClasses, bodyCssToDelete), '.').join(' ')
     }
     // write classes (notice third input argument)
     htmlAstObj = getAllValuesByKey(htmlAstObj, 'class', allBodyClasses)
@@ -295,8 +267,8 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // prep ids:
     for (i = 0, len = allBodyIds.length; i < len; i++) {
       splitBodyIds = allBodyIds[i].split(' ')
-      splitBodyIds = prependToEachElIfMissing(_.uniq(_.without(splitBodyIds, '')), '#')
-      allBodyIds[i] = removeFromTheFrontOfEachEl(_.difference(splitBodyIds, bodyCssToDelete), '#').join(' ')
+      splitBodyIds = util.prependToEachElIfMissing(_.uniq(_.without(splitBodyIds, '')), '#')
+      allBodyIds[i] = util.unprependToEachElIfPresent(_.difference(splitBodyIds, bodyCssToDelete), '#').join(' ')
     }
     // write ids (notice third input argument)
     htmlAstObj = getAllValuesByKey(htmlAstObj, 'id', allBodyIds)
@@ -324,7 +296,7 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     return [toBeReturned, {
       allInHead: unwhitelistedAllClassesAndIdsWithinHead,
       allInBody: unwhitelistedAllClassesAndIdsWithinBody,
-      deletedFromHead: headCssToDelete,
+      deletedFromHead: deletedFromHead,
       deletedFromBody: bodyCssToDelete
     }]
 

@@ -71,10 +71,12 @@ Position | Type         | Description
 
 Info object's key | Type    | Description
 ------------------|---------|-----------------
-`allInHead`       | Array   | Deduped array of all classes and id's in HEAD
-`allInBody`       | Array   | Deduped array of all classes and id's in BODY
-`deletedFromHead` | Array   | Array of what classes/id's were deleted from HEAD
-`deletedFromBody` | Array   | Array of what classes/id's were deleted from BODY
+`allInHead`       | Array   | Deduped array of all classes and id's between `<head>` tags
+`allInBody`       | Array   | Deduped array of all classes and id's between `<body>` tags
+`deletedFromHead` | Array   | Array of classes/id's that were deleted inside `<head>` _at least once_^
+`deletedFromBody` | Array   | Array of classes/id's that were deleted inside `<body>` _at least once_^
+
+^ Some legit, used classes/id's might be "sandwiched" with unused-ones (like `.head-only.real-class`) and deleted in some `<style>` tags, but not in all. This is a rare case, added in [v1.12](https://github.com/code-and-send/email-remove-unused-css/releases/tag/v1.12.0).
 
 ## Input options.whitelist
 
