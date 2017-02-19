@@ -41,7 +41,7 @@
     "html-minifier": "^3.2.3",
     "lodash": "^4.16.5",
     "posthtml-ast-compare": "*",
-    "posthtml-ast-delete-key": "*",
+    "posthtml-ast-delete-key": ">=2.0.4",
     "posthtml-ast-delete-object": "*",
     "posthtml-ast-get-object": "*",
     "posthtml-ast-get-values-by-key": "*",
