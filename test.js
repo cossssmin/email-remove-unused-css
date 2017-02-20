@@ -78,8 +78,7 @@ test('01.01 - removes classes and id\'s from HTML5 (normal input)', t => {
 </html>\
 '
   )
-
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.01'
@@ -222,7 +221,7 @@ test('01.03 - deletes blank class/id attrs and empty because of deletion', t => 
 '
 )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.03'
@@ -231,48 +230,41 @@ test('01.03 - deletes blank class/id attrs and empty because of deletion', t => 
 })
 
 test('01.04 - class present in both head and body, but head has it joined with nonexistent class', t => {
-  actual = minify(
-    remove('\
+  actual = remove('\
 <!DOCTYPE html>\
 <html lang="en">\
 <head>\
-<style type="text/css">\
-  .real-class-1#head-only-class-1, #head-only-class-2.real-class-1[lang|en]{width:100% !important;}\
+<meta charset="UTF-8">\
+<title>test</title>\
+<style type="text/css" media="screen">\
+.real-class-1#head-only-class-1, #head-only-class-2.real-class-1[lang|en]{ width:100% !important; }\
 </style>\
 </head>\
 <body>\
-<table class="real-class-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
-  <tr>\
-    <td class="real-class-1">\
-      <img src="spacer.gif">\
-    </td>\
-  </tr>\
+<table class="real-class-1">\
+<tr>\
+<td class="real-class-1"><img src="spacer.gif"></td>\
+</tr>\
 </table>\
 </body>\
-</html>\
-'
-    )[0]
-  )
-  intended = minify(
-'\
-<!DOCTYPE html>\
+</html>')[0]
+
+  intended = '<!DOCTYPE html>\
 <html lang="en">\
 <head>\
+<meta charset="UTF-8">\
+<title>test</title>\
 </head>\
 <body>\
-<table width="100%" border="0" cellpadding="0" cellspacing="0">\
-  <tr>\
-    <td>\
-      <img src="spacer.gif">\
-    </td>\
-  </tr>\
+<table>\
+<tr>\
+<td><img src="spacer.gif"></td>\
+</tr>\
 </table>\
 </body>\
-</html>\
-'
-  )
+</html>'
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.04'
@@ -338,7 +330,7 @@ test('01.05 - multiple style tags recognised and transformed', t => {
 '
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.05'
@@ -413,7 +405,7 @@ test('01.06 - multiple levels of media queries cleaned', t => {
 '
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.06'
@@ -479,7 +471,7 @@ test('01.07 - empty media queries removed', t => {
 '
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.07'
@@ -545,7 +537,7 @@ test('01.08 - style tags are outside HEAD', t => {
 '
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.08'
@@ -588,7 +580,7 @@ test('01.09 - removes media query together with the whole style tag #1', t => {
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.09'
@@ -637,7 +629,7 @@ zzz\
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.10'
@@ -693,7 +685,7 @@ test('01.11 - removes three media queries together with the style tags', t => {
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.11'
@@ -732,7 +724,7 @@ color:  black;\
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.12'
@@ -774,7 +766,7 @@ test('01.13 - media query with asterisk', t => {
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.13'
@@ -816,7 +808,7 @@ test('01.14 - complex media query #1', t => {
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.14'
@@ -858,7 +850,7 @@ test('01.15 - complex media query #2', t => {
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '01.15'
@@ -878,7 +870,7 @@ test('02.01 - nothing to remove, one img tag', t => {
 '<img src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz"/>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '02.01'
@@ -894,7 +886,7 @@ test('02.02 - nothing to remove, few single tags', t => {
     '<br><hr><meta>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '02.02.01'
@@ -910,7 +902,7 @@ test('02.02 - nothing to remove, few single tags', t => {
     '<br/><hr/><meta/>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '02.02.02'
@@ -926,7 +918,7 @@ test('02.02 - nothing to remove, few single tags', t => {
     '<br/><hr/><meta/>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '02.02.03'
@@ -942,7 +934,7 @@ test('02.02 - nothing to remove, few single tags', t => {
     '<br><hr><meta>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '02.02.04'
@@ -990,7 +982,7 @@ test('02.03 - nothing to remove, respects XHTML images within', t => {
 '
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '02.03'
@@ -1044,7 +1036,7 @@ test('02.04 - fixes the IMG, HR, BR and META tags to be closed because of doctyp
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '02.04'
@@ -1098,7 +1090,7 @@ test('02.05 - doesn\'t fix the IMG, HR, BR and META tags because of doctype', t 
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '02.05'
@@ -1129,7 +1121,7 @@ test('03.01 - missing closing TD, TR, TABLE tags restored by parser', t => {
 </table>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '03.01'
@@ -1162,10 +1154,47 @@ test('03.02 - missing TD, TR, TABLE, BODY and HTML closing tags restored by pars
 </html>'
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '03.02'
+  )
+})
+
+test('03.03 - doesn\'t remove any other empty attributes besides class/id', t => {
+  actual = minify(
+    remove('\
+<html>\
+<body>\
+  <table width="100%" border="0" cellpadding="0" cellspacing="0">\
+    <tr whatnot="">\
+      <td class="">\
+        <img src="spacer.gif" width="1" height="1" border="0" style="display:block;" alt=""/>\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>'
+    )[0]
+  )
+  intended = minify('\
+<html>\
+<body>\
+  <table width="100%" border="0" cellpadding="0" cellspacing="0">\
+    <tr whatnot="">\
+      <td>\
+        <img src="spacer.gif" width="1" height="1" border="0" style="display:block;" alt=""/>\
+      </td>\
+    </tr>\
+  </table>\
+</body>\
+</html>'
+  )
+
+  t.deepEqual(
+    actual,
+    intended,
+    '03.03'
   )
 })
 
@@ -1179,7 +1208,7 @@ test('04.01 - doesn\'t affect emoji characters within the code', t => {
   )
   intended = minify('<td>🦄</td>')
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '04.01'
@@ -1192,7 +1221,7 @@ test('04.02 - doesn\'t affect emoji characters within the attribute names', t =>
   )
   intended = minify('<td data-emoji="🦄">emoji</td>')
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '04.02'
@@ -1204,21 +1233,21 @@ test('04.02 - doesn\'t affect emoji characters within the attribute names', t =>
 // ==============================
 
 test('05.01 - all missing args', t => {
-  t.is(
+  t.deepEqual(
     remove(),
     undefined,
     '05.01')
 })
 
 test('05.02 - Boolean input', t => {
-  t.is(
+  t.deepEqual(
     remove(true),
     true,
     '05.02')
 })
 
 test('05.03 - null input', t => {
-  t.is(
+  t.deepEqual(
     remove(null),
     null,
     '05.03')
@@ -1536,7 +1565,7 @@ test('07.01 - nothing removed because of settings.whitelist', t => {
 '
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '07.01'
@@ -1602,7 +1631,7 @@ test('07.02 - some removed, some whitelisted', t => {
 '
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '07.02'
@@ -1670,7 +1699,7 @@ test('07.03 - case of whitelisting everything', t => {
 '
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     intended,
     '07.03'
@@ -1724,7 +1753,7 @@ test('08.02 - suppressing CSS throwing by settings.noThrowing = true', t => {
     )[0]
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     'the input code has problems, please check it',
     '08.02'
@@ -1762,7 +1791,7 @@ test('08.04 - suppressing HTML throwing by settings.noThrowing = true', t => {
     )[0]
   )
 
-  t.is(
+  t.deepEqual(
     actual,
     'the input code has problems, please check it',
     '08.04'

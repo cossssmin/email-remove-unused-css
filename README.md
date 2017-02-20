@@ -15,6 +15,29 @@
 * Gulp plugin: [gulp-email-remove-unused-css](https://github.com/code-and-send/gulp-email-remove-unused-css/)
 * PostHTML plugin: [posthtml-email-remove-unused-css](https://github.com/code-and-send/posthtml-email-remove-unused-css/)
 
+## Table of Contents
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Install](#install)
+- [API](#api)
+  - [API - Input](#api---input)
+  - [API - Input - Options object](#api---input---options-object)
+  - [API - Output array](#api---output-array)
+  - [API - Output array - Info object](#api---output-array---info-object)
+- [Input options.whitelist](#input-optionswhitelist)
+- [Input options.noThrowing](#input-optionsnothrowing)
+- [Removing unused CSS from web pages & competition](#removing-unused-css-from-web-pages--competition)
+- [Use](#use)
+- [Dependencies](#dependencies)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [Licence](#licence)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Install
 
 ```bash

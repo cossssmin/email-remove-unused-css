@@ -197,7 +197,6 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
       while (!compare(erasedTest, clean(erasedTest)) || !compare(clean(erasedTest), erasedTest)) {
         erasedTest = clean(erasedTest)
       }
-
       var stringifiedErasedTest
 
       if (existy(erasedTest) && nonEmpty(erasedTest.stylesheet)) {
@@ -212,7 +211,7 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
 
     allStyleTags.forEach(function (el, i) {
       if ((el.tag === 'style') && (el.content.length === 1) && (el.content[0].length === 0)) {
-        allStyleTags[i] = {}
+        allStyleTags[i] = ''
       }
     })
     // Perform a secondary check, are all classes within <body> present in this cleaned selectors list.
@@ -274,8 +273,8 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     htmlAstObj = getAllValuesByKey(htmlAstObj, 'id', allBodyIds)
     // ==============================
     // clean up
-    htmlAstObj = deleteKey(htmlAstObj, 'class', '')
-    htmlAstObj = deleteKey(htmlAstObj, 'id', '')
+    htmlAstObj = deleteKey(htmlAstObj, {key: 'class', val: '', cleanup: true})
+    htmlAstObj = deleteKey(htmlAstObj, {key: 'id', val: '', cleanup: true})
     htmlAstObj = del(htmlAstObj, {tag: 'style'}, true)
     htmlAstObj = del(htmlAstObj, {tag: 'style', attrs: {type: 'text/css'}}, true)
 
@@ -291,7 +290,6 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     } else {
       toBeReturned = render(htmlAstObj, { closingSingleTag: closingSingleTag })
     }
-    // console.log('toBeReturned = ' + JSON.stringify(toBeReturned, null, 4))
 
     return [toBeReturned, {
       allInHead: unwhitelistedAllClassesAndIdsWithinHead,

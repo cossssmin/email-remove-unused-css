@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.13.0] - 2017-02-20
+### Updated
+- Updated dependencies with intent to tighten up the empty AST tree element removal process. Practically this means, `email-remove-unused-css` doesn't remove empty ALT ~tags~ attributes form images any more. I created a new library, `ast-monkey` to solve this bug.
+
+Apparently, it is difficult to traverse the AST tree both ways, particularly, to check, all particular AST node's parent nodes up until the top, root. `ast-monkey` [does that]() with the help of indexing the AST's.
+
 ## [1.12.0] - 2017-01-11
 ### Added
 - If certain classes/id's were removed from `<head>` because they were "sandwiched" with non-existent-ones, like `.head-only` in `.head-only.real`, it's also added to the returned info object. Previously it was not. Mind you, in some cases, that "sandwiched" class/id can be present in few places in `<head>` styles, and removed not from everywhere. That means, info object's "removed" lists mention classes/id's that were deleted at least once, not necessary from everywhere.

@@ -5,12 +5,12 @@
   "main": "index.js",
   "scripts": {
     "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "precommit": "npm test",
+    "precommit": "npm test && doctoc README.md",
     "test": "standard && nyc --reporter=html --reporter=text ava"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/code-and-send/email-remove-unused-css.git"
+    "url": "https://github.com/code-and-send/email-remove-unused-css.git"
   },
   "keywords": [
     "email",
@@ -53,9 +53,10 @@
   "devDependencies": {
     "ava": "*",
     "coveralls": "*",
+    "doctoc": "*",
     "html-minifier": "^3.2.2",
-    "husky": "^0.12.0",
-    "nyc": "^10.0.0",
+    "husky": "*",
+    "nyc": "*",
     "standard": "*"
   },
   "ava": {
