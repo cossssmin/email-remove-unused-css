@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.14.0] - 2017-02-20
+### Tweaks
+- BitHound config tweak
+
 ## [1.13.0] - 2017-02-20
 ### Updated
 - Updated dependencies with intent to tighten up the empty AST tree element removal process. Practically this means, `email-remove-unused-css` doesn't remove empty ALT ~tags~ attributes form images any more. I created a new library, `ast-monkey` to solve this bug.
