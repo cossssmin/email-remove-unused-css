@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.15.0] - 2017-03-01
+### Tweaks
+- Latest (JS) Standard linter doesn't like expressions within AVA throw test blocks. Fixed that.
+
 ## [1.14.0] - 2017-02-20
 ### Tweaks
 - BitHound config tweak
@@ -83,12 +87,14 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 
 - Adding test 01.03
 
-
-[1.12.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.8.0...v1.12.0
-[1.8.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.7.0...v1.8.0
-[1.7.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.6.0...v1.7.0
-[1.6.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.4.0...v1.5.0
-[1.4.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.1.0...v1.2.0
+[1.3.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.2.0...v1.3.0
+[1.4.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.3.0...v1.4.0
+[1.5.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.4.0...v1.5.0
+[1.6.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.5.0...v1.6.0
+[1.7.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.6.0...v1.7.0
+[1.8.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.7.0...v1.8.0
+[1.12.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.8.0...v1.12.0
+[1.13.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.12.0...v1.13.0
+[1.14.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.13.0...v1.14.0
+[1.15.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.14.0...v1.15.0

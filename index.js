@@ -54,6 +54,7 @@ function clean (input) {
  * @return {Array}                          * returned html code in a string format in array's elem. [0]
  *                                          * the other info in array's elem. [1]
  */
+
 function emailRemoveUnusedCss (htmlContentsAsString, settings) {
   var whitelist
   var treeInputMode = false

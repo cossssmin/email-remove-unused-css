@@ -1712,7 +1712,7 @@ test('07.03 - case of whitelisting everything', t => {
 
 test('08.01 - CSS parsing throws - default behaviour', t => {
   t.throws(function () {
-    remove('\
+    intended = remove('\
       <html xmlns="http://www.w3.org/1999/xhtml">\
       <head>\
         <style type="text/css">\
@@ -1762,7 +1762,7 @@ test('08.02 - suppressing CSS throwing by settings.noThrowing = true', t => {
 
 test('08.03 - HTML parsing throws - default behaviour', t => {
   t.throws(function () {
-    remove('\
+    intended = remove('\
       <html<html<html<html xmlns="http://www.w3.org/1999/xhtml">\
       <head>\
         <style type="text/css">\
