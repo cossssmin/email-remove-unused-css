@@ -35,7 +35,7 @@
   },
   "homepage": "https://github.com/code-and-send/email-remove-unused-css",
   "dependencies": {
-    "array-pull-all-with-glob": "*",
+    "array-pull-all-with-glob": "1.4.1",
     "css": "^2.2.1",
     "detect-is-it-html-or-xhtml": "*",
     "html-minifier": "^3.2.3",
