@@ -37,7 +37,7 @@
   "dependencies": {
     "array-pull-all-with-glob": "*",
     "css": "^2.2.1",
-    "detect-is-it-html-or-xhtml": "*",
+    "detect-is-it-html-or-xhtml": ">=2.0.0",
     "html-minifier": "^3.2.3",
     "lodash": "^4.16.5",
     "posthtml-ast-compare": "*",
