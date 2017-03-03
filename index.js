@@ -14,9 +14,9 @@ var deleteKey = require('posthtml-ast-delete-key')
 var findTag = require('posthtml-ast-get-object')
 var pullAllWithGlob = require('array-pull-all-with-glob')
 var detect = require('detect-is-it-html-or-xhtml')
-var compare = require('posthtml-ast-compare')
 var nonEmpty = require('util-nonempty')
 var util = require('./util.js')
+var equal = require('deep-equal')
 
 var i, len
 
@@ -34,12 +34,12 @@ function clean (input) {
   // delete all empty selectors within rules:
   input = del(input, {selectors: ['']})
   input = del(input, {selectors: []})
-  input = del(input, {type: 'rule', selectors: ['']})
+  input = del(input, {rules: ''})
   input = del(input, {rules: []})
+  input = del(input, {type: 'rule', selectors: ['']})
   input = del(input, {type: 'stylesheet'}, true)
   input = del(input, {class: ''})
   input = del(input, {id: ''})
-  input = del(input, {rules: ''})
   return input
 }
 
@@ -195,8 +195,8 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
       // finally, write over:
       var erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', allSelectorsCopy)
 
-      while (!compare(erasedTest, clean(erasedTest)) || !compare(clean(erasedTest), erasedTest)) {
-        erasedTest = clean(erasedTest)
+      while (!equal(erasedTest, clean(erasedTest), {strict: true})) {
+        erasedTest = _.cloneDeep(clean(erasedTest))
       }
       var stringifiedErasedTest
 
@@ -207,7 +207,6 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
         stringifiedErasedTest = ''
       }
       el.content[0] = stringifiedErasedTest
-      //
     })
 
     allStyleTags.forEach(function (el, i) {
@@ -282,8 +281,6 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     //
     // FINALE. Prep and return
     //
-
-    // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
 
     var toBeReturned
     if (treeInputMode) {

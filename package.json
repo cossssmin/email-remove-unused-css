@@ -35,20 +35,19 @@
   },
   "homepage": "https://github.com/code-and-send/email-remove-unused-css",
   "dependencies": {
-    "array-pull-all-with-glob": "*",
+    "array-pull-all-with-glob": "^2.0.0",
     "css": "^2.2.1",
+    "deep-equal": "^1.0.1",
     "detect-is-it-html-or-xhtml": "*",
-    "html-minifier": "^3.2.3",
     "lodash": "^4.16.5",
-    "posthtml-ast-compare": "*",
-    "posthtml-ast-delete-key": "*",
-    "posthtml-ast-delete-object": "*",
-    "posthtml-ast-get-object": "*",
-    "posthtml-ast-get-values-by-key": "*",
+    "posthtml-ast-delete-key": "^3.1.0",
+    "posthtml-ast-delete-object": "^2.8.0",
+    "posthtml-ast-get-object": "^1.4.0",
+    "posthtml-ast-get-values-by-key": "^1.4.0",
     "posthtml-parser": "^0.2.0",
     "posthtml-render": "^1.0.6",
-    "string-extract-class-names": "*",
-    "util-nonempty": "*"
+    "string-extract-class-names": "^3.3.1",
+    "util-nonempty": "^1.0.3"
   },
   "devDependencies": {
     "ava": "*",
@@ -57,10 +56,9 @@
     "html-minifier": "^3.2.2",
     "husky": "*",
     "nyc": "*",
-    "standard": "*"
+    "standard": "^9.0.0"
   },
   "ava": {
-    "tap": false,
     "verbose": true
   }
 }
