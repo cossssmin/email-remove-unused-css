@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.17.0] - 2017-06-19
+### Updated
+- All deps
+- Rebased some code
+
 ## [1.16.0] - 2017-03-03
 ### Tweaks
 - Small rebasing.
@@ -48,7 +53,7 @@ Apparently, it is difficult to traverse the AST tree both ways, particularly, to
 ## [1.5.0] - 2016-12-07
 
 ### Fixed
-- [Issue #3](https://github.com/code-and-send/email-remove-unused-css/issues/3). Thanks to Steven Vachon for flagging this. The root cause was I had set too loose barriers for the styles coming into the CSS renderer. When style tag had only media query and when both were meant to be deleted, CSS renderer _threw_ because of the empty content. I added some conditional checks and now to-be-deleted empty media queries bypass CSS renderer completely.
+- [Issue #3](https://github.com/codsen/email-remove-unused-css/issues/3). Thanks to Steven Vachon for flagging this. The root cause was I had set too loose barriers for the styles coming into the CSS renderer. When style tag had only media query and when both were meant to be deleted, CSS renderer _threw_ because of the empty content. I added some conditional checks and now to-be-deleted empty media queries bypass CSS renderer completely.
 
 ### Added
 - New tests: 01.08, 01.09, 01.10, 01.11, 01.12, 01.13 to cover all the newly-discovered cases.
@@ -92,15 +97,16 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 
 - Adding test 01.03
 
-[1.2.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.1.0...v1.2.0
-[1.3.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.2.0...v1.3.0
-[1.4.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.3.0...v1.4.0
-[1.5.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.4.0...v1.5.0
-[1.6.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.5.0...v1.6.0
-[1.7.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.6.0...v1.7.0
-[1.8.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.7.0...v1.8.0
-[1.12.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.8.0...v1.12.0
-[1.13.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.12.0...v1.13.0
-[1.14.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.13.0...v1.14.0
-[1.15.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.14.0...v1.15.0
-[1.16.0]: https://github.com/code-and-send/email-remove-unused-css/compare/v1.15.0...v1.16.0
+[1.2.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.1.0...v1.2.0
+[1.3.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.2.0...v1.3.0
+[1.4.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.3.0...v1.4.0
+[1.5.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.4.0...v1.5.0
+[1.6.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.5.0...v1.6.0
+[1.7.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.6.0...v1.7.0
+[1.8.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.7.0...v1.8.0
+[1.12.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.8.0...v1.12.0
+[1.13.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.12.0...v1.13.0
+[1.14.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.13.0...v1.14.0
+[1.15.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.14.0...v1.15.0
+[1.16.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.15.0...v1.16.0
+[1.17.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.16.0...v1.17.0

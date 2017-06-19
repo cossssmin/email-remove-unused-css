@@ -1,6 +1,6 @@
 # email-remove-unused-css
 
-<a href="https://github.com/feross/standard" style="float: right; padding: 0 0 20px 20px;"><img src="https://cdn.rawgit.com/feross/standard/master/sticker.svg" alt="Standard JavaScript" width="100" align="right"></a>
+<a href="https://standardjs.com" style="float: right; padding: 0 0 20px 20px;"><img src="https://cdn.rawgit.com/feross/standard/master/sticker.svg" alt="Standard JavaScript" width="100" align="right"></a>
 
 > Remove unused CSS from email templates
 
@@ -12,8 +12,8 @@
 [![Downloads/Month][downloads-img]][downloads-url]
 
 * Online web app: [EmailComb](https://emailcomb.com)
-* Gulp plugin: [gulp-email-remove-unused-css](https://github.com/code-and-send/gulp-email-remove-unused-css/)
-* PostHTML plugin: [posthtml-email-remove-unused-css](https://github.com/code-and-send/posthtml-email-remove-unused-css/)
+* Gulp plugin: [gulp-email-remove-unused-css](https://github.com/codsen/gulp-email-remove-unused-css/)
+* PostHTML plugin: [posthtml-email-remove-unused-css](https://github.com/codsen/posthtml-email-remove-unused-css/)
 
 ## Table of Contents
 
@@ -99,7 +99,7 @@ Info object's key | Type    | Description
 `deletedFromHead` | Array   | Array of classes/id's that were deleted inside `<head>` _at least once_^
 `deletedFromBody` | Array   | Array of classes/id's that were deleted inside `<body>` _at least once_^
 
-^ Some legit, used classes/id's might be "sandwiched" with unused-ones (like `.head-only.real-class`) and deleted in some `<style>` tags, but not in all. This is a rare case, added in [v1.12](https://github.com/code-and-send/email-remove-unused-css/releases/tag/v1.12.0).
+^ Some legit, used classes/id's might be "sandwiched" with unused-ones (like `.head-only.real-class`) and deleted in some `<style>` tags, but not in all. This is a rare case, added in [v1.12](https://github.com/codsen/email-remove-unused-css/releases/tag/v1.12.0).
 
 ## Input options.whitelist
 
@@ -177,17 +177,17 @@ console.log(newHTML[0]) // remember result will come in an array's first element
 
 This library is dependent on few other libraries:
 
-* [array-pull-all-with-glob](https://github.com/code-and-send/array-pull-all-with-glob)
-* [detect-is-it-html-or-xhtml](https://github.com/code-and-send/detect-is-it-html-or-xhtml)
-* [posthtml-ast-delete-key](https://github.com/code-and-send/posthtml-ast-delete-key)
-* [posthtml-ast-delete-object](https://github.com/code-and-send/posthtml-ast-delete-object)
-* [posthtml-ast-get-object](https://github.com/code-and-send/posthtml-ast-get-object)
-* [posthtml-ast-get-values-by-key](https://github.com/code-and-send/posthtml-ast-get-values-by-key)
-* [posthtml-ast-is-empty](https://github.com/code-and-send/posthtml-ast-is-empty)
-* [string-extract-class-names](https://github.com/code-and-send/string-extract-class-names)
-* [posthtml-ast-loose-compare](https://github.com/code-and-send/posthtml-ast-loose-compare)
-* [posthtml-ast-compare](https://github.com/code-and-send/posthtml-ast-compare)
-* [posthtml-ast-contains-only-empty-space](https://github.com/code-and-send/posthtml-ast-contains-only-empty-space)
+* [array-pull-all-with-glob](https://github.com/codsen/array-pull-all-with-glob)
+* [detect-is-it-html-or-xhtml](https://github.com/codsen/detect-is-it-html-or-xhtml)
+* [posthtml-ast-delete-key](https://github.com/codsen/posthtml-ast-delete-key)
+* [posthtml-ast-delete-object](https://github.com/codsen/posthtml-ast-delete-object)
+* [posthtml-ast-get-object](https://github.com/codsen/posthtml-ast-get-object)
+* [posthtml-ast-get-values-by-key](https://github.com/codsen/posthtml-ast-get-values-by-key)
+* [posthtml-ast-is-empty](https://github.com/codsen/posthtml-ast-is-empty)
+* [string-extract-class-names](https://github.com/codsen/string-extract-class-names)
+* [posthtml-ast-loose-compare](https://github.com/codsen/posthtml-ast-loose-compare)
+* [posthtml-ast-compare](https://github.com/codsen/posthtml-ast-compare)
+* [posthtml-ast-contains-only-empty-space](https://github.com/codsen/posthtml-ast-contains-only-empty-space)
 
 By the way, the above libraries that have names which begin with `posthtml-ast-` are tooling libraries to work with [PostHTML-parsed](https://github.com/posthtml/posthtml-parser) AST tree's. They're not PostHTML plugins, but rather real Node (micro)libraries.
 
@@ -197,13 +197,13 @@ By the way, the above libraries that have names which begin with `posthtml-ast-`
 $ npm test
 ```
 
-For unit tests we use [AVA](https://github.com/avajs/ava), [Istanbul CLI](https://github.com/istanbuljs/nyc) and [JS Standard](https://github.com/feross/standard) notation.
+For unit tests we use [AVA](https://github.com/avajs/ava), [Istanbul CLI](https://github.com/istanbuljs/nyc) and [JS Standard](https://standardjs.com) notation.
 
 ## Contributing
 
-All contributions are welcome. Please stick to [Standard JavaScript](https://github.com/feross/standard) notation and supplement the `test.js` with new unit tests covering your feature(s).
+All contributions are welcome. Please stick to [Standard JavaScript](https://standardjs.com) notation and supplement the `test.js` with new unit tests covering your feature(s).
 
-If you see anything incorrect whatsoever, do [raise an issue](https://github.com/code-and-send/email-remove-unused-css/issues). If you file a pull request, I'll do my best to help you to get it merged in a timely manner. If you have any comments on the code, including ideas how to improve things, don't hesitate to contact me by email.
+If you see anything incorrect whatsoever, do [raise an issue](https://github.com/codsen/email-remove-unused-css/issues). If you file a pull request, I'll do my best to help you to get it merged in a timely manner. If you have any comments on the code, including ideas how to improve things, don't hesitate to contact me by email.
 
 ## Licence
 
@@ -229,20 +229,20 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[travis-img]: https://travis-ci.org/code-and-send/email-remove-unused-css.svg?branch=master
-[travis-url]: https://travis-ci.org/code-and-send/email-remove-unused-css
+[travis-img]: https://travis-ci.org/codsen/email-remove-unused-css.svg?branch=master
+[travis-url]: https://travis-ci.org/codsen/email-remove-unused-css
 
-[cov-img]: https://coveralls.io/repos/github/code-and-send/email-remove-unused-css/badge.svg?branch=master
-[cov-url]: https://coveralls.io/github/code-and-send/email-remove-unused-css?branch=master
+[cov-img]: https://coveralls.io/repos/github/codsen/email-remove-unused-css/badge.svg?branch=master
+[cov-url]: https://coveralls.io/github/codsen/email-remove-unused-css?branch=master
 
-[overall-img]: https://www.bithound.io/github/code-and-send/email-remove-unused-css/badges/score.svg
-[overall-url]: https://www.bithound.io/github/code-and-send/email-remove-unused-css
+[overall-img]: https://www.bithound.io/github/codsen/email-remove-unused-css/badges/score.svg
+[overall-url]: https://www.bithound.io/github/codsen/email-remove-unused-css
 
-[deps-img]: https://www.bithound.io/github/code-and-send/email-remove-unused-css/badges/dependencies.svg
-[deps-url]: https://www.bithound.io/github/code-and-send/email-remove-unused-css/master/dependencies/npm
+[deps-img]: https://www.bithound.io/github/codsen/email-remove-unused-css/badges/dependencies.svg
+[deps-url]: https://www.bithound.io/github/codsen/email-remove-unused-css/master/dependencies/npm
 
-[dev-img]: https://www.bithound.io/github/code-and-send/email-remove-unused-css/badges/devDependencies.svg
-[dev-url]: https://www.bithound.io/github/code-and-send/email-remove-unused-css/master/dependencies/npm
+[dev-img]: https://www.bithound.io/github/codsen/email-remove-unused-css/badges/devDependencies.svg
+[dev-url]: https://www.bithound.io/github/codsen/email-remove-unused-css/master/dependencies/npm
 
 [downloads-img]: https://img.shields.io/npm/dm/email-remove-unused-css.svg
 [downloads-url]: https://www.npmjs.com/package/email-remove-unused-css

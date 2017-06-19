@@ -3,22 +3,23 @@
 // ===================================
 // R E Q U I R E' S
 
-var parser = require('posthtml-parser')
-var render = require('posthtml-render')
-var css = require('css')
-var _ = require('lodash')
-var del = require('posthtml-ast-delete-object')
-var extract = require('string-extract-class-names')
-var getAllValuesByKey = require('posthtml-ast-get-values-by-key')
-var deleteKey = require('posthtml-ast-delete-key')
-var findTag = require('posthtml-ast-get-object')
-var pullAllWithGlob = require('array-pull-all-with-glob')
-var detect = require('detect-is-it-html-or-xhtml')
-var nonEmpty = require('util-nonempty')
-var util = require('./util.js')
-var equal = require('deep-equal')
+const parser = require('posthtml-parser')
+const render = require('posthtml-render')
+const css = require('css')
+const _ = require('lodash')
+const del = require('posthtml-ast-delete-object')
+const extract = require('string-extract-class-names')
+const getAllValuesByKey = require('posthtml-ast-get-values-by-key')
+const deleteKey = require('posthtml-ast-delete-key')
+const findTag = require('posthtml-ast-get-object')
+const pullAllWithGlob = require('array-pull-all-with-glob')
+const detect = require('detect-is-it-html-or-xhtml')
+const nonEmpty = require('util-nonempty')
+const equal = require('deep-equal')
+const util = require('./util')
+const removeConsecutiveEmptySpaceStrings = util.removeConsecutiveEmptySpaceStrings
 
-var i, len
+let i, len
 
 // ===================================
 // F U N C T I O N S
@@ -32,14 +33,15 @@ function aContainsB (a, b) {
 
 function clean (input) {
   // delete all empty selectors within rules:
-  input = del(input, {selectors: ['']})
-  input = del(input, {selectors: []})
-  input = del(input, {rules: ''})
-  input = del(input, {rules: []})
-  input = del(input, {type: 'rule', selectors: ['']})
-  input = del(input, {type: 'stylesheet'}, true)
-  input = del(input, {class: ''})
-  input = del(input, {id: ''})
+  input = del(input, {selectors: ['']}, {hungryForWhitespace: true, matchKeysStrictly: true})
+  input = del(input, {selectors: []}, {hungryForWhitespace: false, matchKeysStrictly: false})
+  input = del(input, {rules: []}, {hungryForWhitespace: false, matchKeysStrictly: false})
+  // input = del(input, {rules: ''}, {hungryForWhitespace: true, matchKeysStrictly: true})
+  // input = del(input, {type: 'rule', selectors: ['']}, {hungryForWhitespace: true, matchKeysStrictly: true})
+  // input = del(input, {type: 'stylesheet'}, {hungryForWhitespace: true, matchKeysStrictly: true})
+  // input = del(input, {class: ''}, {hungryForWhitespace: true, matchKeysStrictly: false})
+  // input = del(input, {id: ''}, {hungryForWhitespace: true, matchKeysStrictly: false})
+  // input = deleteKey(input, {key: '', only: 'arrays'})
   return input
 }
 
@@ -56,22 +58,20 @@ function clean (input) {
  */
 
 function emailRemoveUnusedCss (htmlContentsAsString, settings) {
-  var whitelist
-  var treeInputMode = false
+  let whitelist
+  let treeInputMode = false
   if (existy(settings) && existy(settings.whitelist)) {
     whitelist = settings.whitelist
   } else {
     whitelist = []
   }
 
-  var noThrowing = false
+  let noThrowing = false
   if (existy(settings) && existy(settings.noThrowing)) {
     noThrowing = settings.noThrowing
   }
 
-  if (!Array.isArray(whitelist)) whitelist = []
-
-  var parsedTree
+  let parsedTree
   if (existy(settings) && existy(settings.parsedTree)) {
     treeInputMode = true
     parsedTree = settings.parsedTree
@@ -89,7 +89,7 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
   }
 
   // identify is it HTML or XHTML, to be used when rendering-back the AST
-  var closingSingleTag = 'default'
+  let closingSingleTag = 'default'
   if (detect(htmlContentsAsString) === 'xhtml') {
     closingSingleTag = 'slash'
   }
@@ -103,58 +103,58 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // PART I. Get all styles from within <head>
     //
 
-    var htmlAstObj
+    let htmlAstObj
     if (treeInputMode) {
       htmlAstObj = parsedTree
     } else {
       htmlAstObj = parser(htmlContentsAsString)
     }
 
-    var allStyleTags = findTag(htmlAstObj, {tag: 'style'})
-    var allStyleTagSelectors = []
+    let allStyleTags = findTag(htmlAstObj, {tag: 'style'})
+    let allStyleTagSelectors = []
     allStyleTags.forEach(function (el, i) {
       allStyleTagSelectors = allStyleTagSelectors.concat(_.flattenDeep(getAllValuesByKey(css.parse(allStyleTags[i].content[0]), 'selectors')))
     })
     allStyleTagSelectors = _.uniq(allStyleTagSelectors)
 
-    var allClassesAndIdsWithinHead = []
+    let allClassesAndIdsWithinHead = []
 
     allStyleTagSelectors.forEach(function (el, i) {
       allClassesAndIdsWithinHead.push(extract(el))
     })
 
     allClassesAndIdsWithinHead = _.uniq(_.flattenDeep(allClassesAndIdsWithinHead, ''))
-    var unwhitelistedAllClassesAndIdsWithinHead = _.clone(allClassesAndIdsWithinHead)
+    let unwhitelistedAllClassesAndIdsWithinHead = _.clone(allClassesAndIdsWithinHead)
     allClassesAndIdsWithinHead = pullAllWithGlob(allClassesAndIdsWithinHead, whitelist)
 
     //
     // PART II. Get all inline styles from within <body>
     //
 
-    var allClassesWithinBodyRawContentsArray = getAllValuesByKey(htmlAstObj, 'class')
+    let allClassesWithinBodyRawContentsArray = getAllValuesByKey(htmlAstObj, 'class')
     allClassesWithinBodyRawContentsArray.forEach(function (el, i) {
       allClassesWithinBodyRawContentsArray[i] = el.split(' ')
     })
     allClassesWithinBodyRawContentsArray = util.prependToEachElIfMissing(_.without(_.flattenDeep(allClassesWithinBodyRawContentsArray), ''))
 
-    var allIdsWithinBodyRaw = getAllValuesByKey(htmlAstObj, 'id')
+    let allIdsWithinBodyRaw = getAllValuesByKey(htmlAstObj, 'id')
     allIdsWithinBodyRaw.forEach(function (el, i) {
       allIdsWithinBodyRaw[i] = el.split(' ')
     })
     allIdsWithinBodyRaw = util.prependToEachElIfMissing(_.without(_.flattenDeep(allIdsWithinBodyRaw), ''), '#')
-    var allClassesAndIdsWithinBody = allClassesWithinBodyRawContentsArray.concat(allIdsWithinBodyRaw)
-    var unwhitelistedAllClassesAndIdsWithinBody = _.clone(allClassesAndIdsWithinBody)
+    let allClassesAndIdsWithinBody = allClassesWithinBodyRawContentsArray.concat(allIdsWithinBodyRaw)
+    let unwhitelistedAllClassesAndIdsWithinBody = _.clone(allClassesAndIdsWithinBody)
     allClassesAndIdsWithinBody = pullAllWithGlob(allClassesAndIdsWithinBody, whitelist)
 
     //
     // PART III. Compile to-be-deleted class names, within <body> and within <head>
     //
 
-    var headCssToDelete = _.clone(allClassesAndIdsWithinHead)
+    let headCssToDelete = _.clone(allClassesAndIdsWithinHead)
     _.pullAll(headCssToDelete, allClassesAndIdsWithinBody)
     // console.log('\n* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4))
 
-    var bodyCssToDelete = _.clone(allClassesAndIdsWithinBody)
+    let bodyCssToDelete = _.clone(allClassesAndIdsWithinBody)
     _.pullAll(bodyCssToDelete, allClassesAndIdsWithinHead)
     // console.log('* bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4) + '\n')
 
@@ -162,11 +162,11 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // PART IV. Delete classes from <head>
     //
 
-    var deletedFromHead = _.clone(headCssToDelete)
+    let deletedFromHead = _.clone(headCssToDelete)
     allStyleTags.forEach(function (el, i) {
-      var parsedCSS = css.parse(el.content[0])
-      var allSelectors = getAllValuesByKey(parsedCSS, 'selectors')
-      var allSelectorsCopy = _.clone(allSelectors)
+      let parsedCSS = css.parse(el.content[0])
+      let allSelectors = getAllValuesByKey(parsedCSS, 'selectors')
+      let allSelectorsCopy = _.clone(allSelectors)
       allSelectorsCopy.forEach(function (elem1, index1) {
         elem1.forEach(function (elem2, index2) {
           // prepare the deletedFromHead array.
@@ -189,16 +189,18 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
         })
       })
 
+      // console.log('1. allSelectorsCopy = ' + JSON.stringify(allSelectorsCopy, null, 4))
       allSelectorsCopy.forEach(function (el, i) {
         allSelectorsCopy[i] = _.without(allSelectorsCopy[i], '')
       })
+      // console.log('2. allSelectorsCopy = ' + JSON.stringify(allSelectorsCopy, null, 4))
       // finally, write over:
-      var erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', allSelectorsCopy)
+      let erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', allSelectorsCopy)
 
       while (!equal(erasedTest, clean(erasedTest), {strict: true})) {
         erasedTest = _.cloneDeep(clean(erasedTest))
       }
-      var stringifiedErasedTest
+      let stringifiedErasedTest
 
       if (existy(erasedTest) && nonEmpty(erasedTest.stylesheet)) {
         stringifiedErasedTest = '\n' + css.stringify(erasedTest) + '\n'
@@ -218,9 +220,9 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // This is necessary to catch classes/id's that were in both <head> and <body> but all their occurencies
     // in <head> were sandwiched with non-existent classes/id's and therefore deleted.
     // See test 01.03. Released v1.2.0.
-    var redundantOnes = []
-    var found = true
-    var remainingClassesAndIdsWithinBody = _.uniq(_.pullAll(allClassesAndIdsWithinBody, bodyCssToDelete))
+    let redundantOnes = []
+    let found = true
+    let remainingClassesAndIdsWithinBody = _.uniq(_.pullAll(allClassesAndIdsWithinBody, bodyCssToDelete))
 
     remainingClassesAndIdsWithinBody.forEach(function (el, i) {
       found = false
@@ -247,11 +249,11 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     // PART V. Delete classes from within <body>
     //
 
-    var allBodyClasses = getAllValuesByKey(htmlAstObj, 'class')
-    var allBodyIds = getAllValuesByKey(htmlAstObj, 'id')
+    let allBodyClasses = getAllValuesByKey(htmlAstObj, 'class')
+    let allBodyIds = getAllValuesByKey(htmlAstObj, 'id')
 
-    var splitBodyClasses
-    var splitBodyIds
+    let splitBodyClasses
+    let splitBodyIds
 
     // ==============================
     // prep classes:
@@ -273,16 +275,19 @@ function emailRemoveUnusedCss (htmlContentsAsString, settings) {
     htmlAstObj = getAllValuesByKey(htmlAstObj, 'id', allBodyIds)
     // ==============================
     // clean up
-    htmlAstObj = deleteKey(htmlAstObj, {key: 'class', val: '', cleanup: true})
-    htmlAstObj = deleteKey(htmlAstObj, {key: 'id', val: '', cleanup: true})
-    htmlAstObj = del(htmlAstObj, {tag: 'style'}, true)
-    htmlAstObj = del(htmlAstObj, {tag: 'style', attrs: {type: 'text/css'}}, true)
+    htmlAstObj = deleteKey(htmlAstObj, {key: 'class', val: ''})
+    htmlAstObj = deleteKey(htmlAstObj, {key: 'id', val: ''})
+    htmlAstObj = deleteKey(htmlAstObj, {key: '', only: 'arrays'})
+    htmlAstObj = del(htmlAstObj, {tag: 'style'}, {hungryForWhitespace: true, matchKeysStrictly: true})
+    htmlAstObj = del(htmlAstObj, {tag: 'style', attrs: {type: 'text/css'}}, {hungryForWhitespace: true, matchKeysStrictly: true})
+    htmlAstObj = removeConsecutiveEmptySpaceStrings(htmlAstObj)
 
     //
     // FINALE. Prep and return
     //
 
-    var toBeReturned
+    // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
+    let toBeReturned
     if (treeInputMode) {
       toBeReturned = htmlAstObj
     } else {

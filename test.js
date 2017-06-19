@@ -1,11 +1,11 @@
 /* eslint-disable no-multi-str */
 'use strict'
+import test from 'ava'
 var remove = require('./index.js')
 var util = require('./util.js')
 var min = require('html-minifier').minify
 var parser = require('posthtml-parser')
 var render = require('posthtml-render')
-import test from 'ava'
 var actual, intended
 
 function minify (inp) {
@@ -18,65 +18,64 @@ function minify (inp) {
 
 test('01.01 - removes classes and id\'s from HTML5 (normal input)', t => {
   actual = minify(
-    remove('\
-<!DOCTYPE html>\
-<html lang="en">\
-<head>\
-<meta charset="UTF-8">\
-<title>Dummy HTML</title>\
-<style type="text/css">\
-  .real-class-1:active, #head-only-id1[whatnot], whatever[lang|en]{width:100% !important;}\
-  #real-id-1:hover{width:100% !important;}\
-</style>\
-</head>\
-<body>\
-<table id="real-id-1 body-only-id-1" class="body-only-class-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
-  <tr>\
-    <td>\
-      <table width="100%" border="0" cellpadding="0" cellspacing="0">\
-        <tr id="body-only-id-4">\
-          <td id="body-only-id-2 body-only-id-3" class="real-class-1 body-only-class-2">\
-            Dummy content.\
-          </td>\
-        </tr>\
-      </table>\
-    </td>\
-  </tr>\
-</table>\
-</body>\
-</html>\
-'
+    remove(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dummy HTML</title>
+<style type="text/css">
+  .real-class-1:active, #head-only-id1[whatnot], whatever[lang|en]{width:100% !important;}
+  #real-id-1:hover{width:100% !important;}
+</style>
+</head>
+<body>
+<table id="real-id-1 body-only-id-1" class="body-only-class-1" width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr id="body-only-id-4">
+          <td id="body-only-id-2 body-only-id-3" class="real-class-1 body-only-class-2">
+            Dummy content.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+`
     )[0]
   )
-  intended = minify(
-'\
-<!DOCTYPE html>\
-<html lang="en">\
-<head>\
-<meta charset="UTF-8">\
-<title>Dummy HTML</title>\
-<style type="text/css">\
-  .real-class-1:active, whatever[lang|en]{width:100% !important;}\
-  #real-id-1:hover{width:100% !important;}\
-</style>\
-</head>\
-<body>\
-<table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
-  <tr>\
-    <td>\
-      <table width="100%" border="0" cellpadding="0" cellspacing="0">\
-        <tr>\
-          <td class="real-class-1">\
-            Dummy content.\
-          </td>\
-        </tr>\
-      </table>\
-    </td>\
-  </tr>\
-</table>\
-</body>\
-</html>\
-'
+  intended = minify(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dummy HTML</title>
+<style type="text/css">
+  .real-class-1:active, whatever[lang|en]{width:100% !important;}
+  #real-id-1:hover{width:100% !important;}
+</style>
+</head>
+<body>
+<table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="real-class-1">
+            Dummy content.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+`
   )
   t.deepEqual(
     actual,
@@ -89,67 +88,66 @@ test('01.02 - removes classes and id\'s from HTML5 (input as RAW AST)', t => {
   actual = parser(minify(render(remove(
     null,
     {
-      parsedTree: parser('\
-<!DOCTYPE html>\
-<html lang="en">\
-<head>\
-  <meta charset="UTF-8">\
-  <title>Dummy HTML</title>\
-  <style type="text/css">\
-    .real-class-1:active, #head-only-id1[whatnot], whatever[lang|en]{width:100% !important;}\
-    #real-id-1:hover{width:100% !important;}\
-  </style>\
-</head>\
-<body>\
-  <table id="real-id-1 body-only-id-1" class="body-only-class-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
-    <tr>\
-      <td>\
-        <table width="100%" border="0" cellpadding="0" cellspacing="0">\
-          <tr id="body-only-id-4">\
-            <td id="body-only-id-2 body-only-id-3" class="real-class-1 body-only-class-2">\
-              Dummy content.\
-            </td>\
-          </tr>\
-        </table>\
-      </td>\
-    </tr>\
-  </table>\
-</body>\
-</html>\
-')
+      parsedTree: parser(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dummy HTML</title>
+  <style type="text/css">
+    .real-class-1:active, #head-only-id1[whatnot], whatever[lang|en]{width:100% !important;}
+    #real-id-1:hover{width:100% !important;}
+  </style>
+</head>
+<body>
+  <table id="real-id-1 body-only-id-1" class="body-only-class-1" width="100%" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <table width="100%" border="0" cellpadding="0" cellspacing="0">
+          <tr id="body-only-id-4">
+            <td id="body-only-id-2 body-only-id-3" class="real-class-1 body-only-class-2">
+              Dummy content.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`)
     }
   )[0]
 )))
   intended = parser(
-    minify('\
-  <!DOCTYPE html>\
-  <html lang="en">\
-  <head>\
-    <meta charset="UTF-8">\
-    <title>Dummy HTML</title>\
-    <style type="text/css">\
-      .real-class-1:active, whatever[lang|en]{width:100% !important;}\
-      #real-id-1:hover{width:100% !important;}\
-    </style>\
-  </head>\
-  <body>\
-    <table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">\
-      <tr>\
-        <td>\
-          <table width="100%" border="0" cellpadding="0" cellspacing="0">\
-            <tr>\
-              <td class="real-class-1">\
-                Dummy content.\
-              </td>\
-            </tr>\
-          </table>\
-        </td>\
-      </tr>\
-    </table>\
-  </body>\
-  </html>\
-  ')
-)
+    minify(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dummy HTML</title>
+  <style type="text/css">
+    .real-class-1:active, whatever[lang|en]{width:100% !important;}
+    #real-id-1:hover{width:100% !important;}
+  </style>
+</head>
+<body>
+  <table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <table width="100%" border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td class="real-class-1">
+              Dummy content.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`))
 
   t.deepEqual(
     actual,
@@ -158,68 +156,66 @@ test('01.02 - removes classes and id\'s from HTML5 (input as RAW AST)', t => {
   )
 })
 
-test('01.03 - deletes blank class/id attrs and empty because of deletion', t => {
+test('01.03 - deletes blank class/id attrs', t => {
   actual = minify(
-    remove('\
-<!DOCTYPE html>\
-<html lang="en">\
-  <head>\
-    <meta charset="UTF-8">\
-      <title>Dummy HTML</title>\
-      <style type="text/css">\
-      #real-id-1:hover{width:100% !important;}\
-      .real-class-1:hover{width:100% !important;}\
-    </style>\
-  </head>\
-  <body>\
-    <table id="body-only-id-1 body-only-id-2" class="body-only-class-1 body-only-class-2" width="100%" border="0" cellpadding="0" cellspacing="0">\
-      <tr>\
-        <td id="" class="">\
-          <table width="100%" border="0" cellpadding="0" cellspacing="0">\
-            <tr id="real-id-1" class="real-class-1">\
-              <td>\
-                Dummy content.\
-              </td>\
-            </tr>\
-          </table>\
-        </td>\
-      </tr>\
-    </table>\
-  </body>\
-</html>\
-'
+    remove(`
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+      <title>Dummy HTML</title>
+      <style type="text/css">
+      #real-id-1:hover{width:100% !important;}
+      .real-class-1:hover{width:100% !important;}
+    </style>
+  </head>
+  <body>
+    <table id="body-only-id-1 body-only-id-2" class="body-only-class-1 body-only-class-2" width="100%" border="0" cellpadding="0" cellspacing="0">
+      <tr>
+        <td id="" class="">
+          <table width="100%" border="0" cellpadding="0" cellspacing="0">
+            <tr id="real-id-1" class="real-class-1">
+              <td>
+                Dummy content.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`
   )[0]
   )
-  intended = minify(
-'\
-<!DOCTYPE html>\
-<html lang="en">\
-  <head>\
-    <meta charset="UTF-8">\
-      <title>Dummy HTML</title>\
-      <style type="text/css">\
-      #real-id-1:hover{width:100% !important;}\
-      .real-class-1:hover{width:100% !important;}\
-    </style>\
-  </head>\
-  <body>\
-    <table width="100%" border="0" cellpadding="0" cellspacing="0">\
-      <tr>\
-        <td>\
-          <table width="100%" border="0" cellpadding="0" cellspacing="0">\
-            <tr id="real-id-1" class="real-class-1">\
-              <td>\
-                Dummy content.\
-              </td>\
-            </tr>\
-          </table>\
-        </td>\
-      </tr>\
-    </table>\
-  </body>\
-</html>\
-'
-)
+  intended = minify(`
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+      <title>Dummy HTML</title>
+      <style type="text/css">
+      #real-id-1:hover{width:100% !important;}
+      .real-class-1:hover{width:100% !important;}
+      </style>
+  </head>
+  <body>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0">
+      <tr>
+        <td>
+          <table width="100%" border="0" cellpadding="0" cellspacing="0">
+            <tr id="real-id-1" class="real-class-1">
+              <td>
+                Dummy content.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`)
 
   t.deepEqual(
     actual,
@@ -230,40 +226,46 @@ test('01.03 - deletes blank class/id attrs and empty because of deletion', t => 
 })
 
 test('01.04 - class present in both head and body, but head has it joined with nonexistent class', t => {
-  actual = remove('\
-<!DOCTYPE html>\
-<html lang="en">\
-<head>\
-<meta charset="UTF-8">\
-<title>test</title>\
-<style type="text/css" media="screen">\
-.real-class-1#head-only-class-1, #head-only-class-2.real-class-1[lang|en]{ width:100% !important; }\
-</style>\
-</head>\
-<body>\
-<table class="real-class-1">\
-<tr>\
-<td class="real-class-1"><img src="spacer.gif"></td>\
-</tr>\
-</table>\
-</body>\
-</html>')[0]
+  actual = remove(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>test</title>
+  <style type="text/css" media="screen">
+    .real-class-1#head-only-class-1, #head-only-class-2.real-class-1[lang|en]{ width:100% !important; }
+  </style>
+</head>
+<body>
+  <table class="real-class-1">
+    <tr>
+      <td class="real-class-1">
+        <img src="spacer.gif">
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`)[0]
 
-  intended = '<!DOCTYPE html>\
-<html lang="en">\
-<head>\
-<meta charset="UTF-8">\
-<title>test</title>\
-</head>\
-<body>\
-<table>\
-<tr>\
-<td><img src="spacer.gif"></td>\
-</tr>\
-</table>\
-</body>\
-</html>'
-
+  intended = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>test</title>
+</head>
+<body>
+  <table>
+    <tr>
+      <td>
+        <img src="spacer.gif">
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`
   t.deepEqual(
     actual,
     intended,
@@ -545,7 +547,7 @@ test('01.08 - style tags are outside HEAD', t => {
 })
 
 // GitHub issue #3
-// https://github.com/code-and-send/email-remove-unused-css/issues/3
+// https://github.com/codsen/email-remove-unused-css/issues/3
 test('01.09 - removes media query together with the whole style tag #1', t => {
   actual = minify(
     remove(
