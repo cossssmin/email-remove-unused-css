@@ -22,7 +22,7 @@
     "from"
   ],
   "author": {
-    "name": "Roy Reveltas",
+    "name": "Roy Revelt",
     "email": "roy@codsen.com",
     "url": "https://github.com/revelt"
   },
@@ -33,30 +33,22 @@
   "homepage": "https://github.com/codsen/email-remove-unused-css",
   "dependencies": {
     "array-pull-all-with-glob": "^2.0.0",
-    "ast-monkey": "^6.2.0",
-    "css": "^2.2.1",
-    "deep-equal": "^1.0.1",
-    "detect-is-it-html-or-xhtml": "*",
-    "lodash": "^4.16.5",
-    "posthtml-ast-delete-key": "^3.1.0",
-    "posthtml-ast-delete-object": "^3.0.0",
-    "posthtml-ast-get-object": "^1.4.0",
-    "posthtml-ast-get-values-by-key": "^2.0.1",
-    "posthtml-parser": "^0.2.0",
-    "posthtml-render": "^1.0.6",
-    "string-extract-class-names": "^3.3.1",
-    "util-nonempty": "^1.0.3"
+    "lodash.clonedeep": "*",
+    "lodash.intersection": "*",
+    "lodash.isplainobject": "*",
+    "lodash.pullall": "*",
+    "lodash.uniq": "*",
+    "string-extract-class-names": "^3.3.1"
   },
   "devDependencies": {
     "ava": "*",
     "coveralls": "*",
     "doctoc": "*",
-    "html-minifier": "^3.2.2",
     "husky": "*",
     "nyc": "*",
     "standard": "^10.0.2"
   },
   "ava": {
-    "verbose": false
+    "verbose": true
   }
 }

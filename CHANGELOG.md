@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.0] - 2017-07-16
+
+Pivoting on priorities. Now the most important is 1) corectness; but then 2) speed.
+Previously, pre-v2, the speed was not consideration. `v1.x` was freaking slow so I had to rewrite everything.
+
+### Changed
+- Complete rewrite, now using trickling string algorithm instead of parsing and dealing with objects. Now all operations are done on a code treating it as a string. This is very important because now it is not possible that parser would throw an error — there are no parsers used!
+- Way stricter approach to cleanup after deletion. Previously unit tests were comparing minified _actual_ and _should-be_ versions of code. All minification was removed from unit tests. Now, whitespace issues are treated as bugs.
+- Now input argument string must be string. If it's not string, this package will `throw` and error.
+- Now input is strictly `string` - no more passing parsed trees via `opts.parsedTree`. The concept of this library is to avoid parsing and objects at all costs so as to keep this library as fast as possible.
+- The output of the package is not a single object, not an array. Both info and result HTML string are within one plain object. That's simpler.
+
+### Removed
+- `opts.noThrowing` because there's no parser any more, there's nothing to instruct not to throw to.
+- `opts.parsedTree` because there's no renderer used and we can't bloat this library - it works without parsing/rendering!
+
 ## [1.17.0] - 2017-06-19
 ### Updated
 - All deps
@@ -79,7 +95,7 @@ It's necessary for upcoming front-end which will need to give option to move cla
 
 ---
 
-## [1.2.0] - 2016-11-25
+## 1.2.0 - 2016-11-25
 
 ### Added
 
@@ -110,3 +126,4 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 [1.15.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.14.0...v1.15.0
 [1.16.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.15.0...v1.16.0
 [1.17.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.16.0...v1.17.0
+[2.0.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.17.0...v2.0.0

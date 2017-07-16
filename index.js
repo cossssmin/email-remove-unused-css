@@ -1,313 +1,651 @@
 'use strict'
 
-// ===================================
-// R E Q U I R E' S
-
-const parser = require('posthtml-parser')
-const render = require('posthtml-render')
-const css = require('css')
-const _ = require('lodash')
-const del = require('posthtml-ast-delete-object')
+// const sply = require('splice-string')
+// const moment = require('moment')
+const clone = require('lodash.clonedeep')
+const pullAll = require('lodash.pullall')
+const uniq = require('lodash.uniq')
+const intersection = require('lodash.intersection')
 const extract = require('string-extract-class-names')
-const getAllValuesByKey = require('posthtml-ast-get-values-by-key')
-const deleteKey = require('posthtml-ast-delete-key')
-const findTag = require('posthtml-ast-get-object')
+const isObj = require('lodash.isplainobject')
+const isArr = Array.isArray
 const pullAllWithGlob = require('array-pull-all-with-glob')
-const detect = require('detect-is-it-html-or-xhtml')
-const nonEmpty = require('util-nonempty')
-const equal = require('deep-equal')
-const util = require('./util')
-const removeConsecutiveEmptySpaceStrings = util.removeConsecutiveEmptySpaceStrings
 
-let i, len
-
-// ===================================
-// F U N C T I O N S
-
-function existy (x) { return x != null }
-function aContainsB (a, b) {
-  return a.indexOf(b) >= 0
-}
-
-// =========
-
-function clean (input) {
-  // delete all empty selectors within rules:
-  input = del(input, {selectors: ['']}, {hungryForWhitespace: true, matchKeysStrictly: true})
-  input = del(input, {selectors: []}, {hungryForWhitespace: false, matchKeysStrictly: false})
-  input = del(input, {rules: []}, {hungryForWhitespace: false, matchKeysStrictly: false})
-  // input = del(input, {rules: ''}, {hungryForWhitespace: true, matchKeysStrictly: true})
-  // input = del(input, {type: 'rule', selectors: ['']}, {hungryForWhitespace: true, matchKeysStrictly: true})
-  // input = del(input, {type: 'stylesheet'}, {hungryForWhitespace: true, matchKeysStrictly: true})
-  // input = del(input, {class: ''}, {hungryForWhitespace: true, matchKeysStrictly: false})
-  // input = del(input, {id: ''}, {hungryForWhitespace: true, matchKeysStrictly: false})
-  // input = deleteKey(input, {key: '', only: 'arrays'})
-  return input
-}
-
-// ===================================
-// A C T I O N
-
-/**
- * emailRemoveUnusedCss - main function
- *
- * @param  {String} htmlContentsAsString    input, html code in a string format
- * @param  {Object} settings                optional settings object
- * @return {Array}                          * returned html code in a string format in array's elem. [0]
- *                                          * the other info in array's elem. [1]
- */
-
-function emailRemoveUnusedCss (htmlContentsAsString, settings) {
-  let whitelist
-  let treeInputMode = false
-  if (existy(settings) && existy(settings.whitelist)) {
-    whitelist = settings.whitelist
-  } else {
-    whitelist = []
+function emailRemoveUnusedCss (str, opts) {
+  function characterSuitableForNames (char) {
+    return /[.#\-_A-Za-z0-9]/.test(char)
   }
+  function existy (x) { return x != null }
+  var MAINDEBUG = 0
+  var i, len
+  // var startdate = new Date()
+  var styleStartedAt = 0
+  var styleEndedAt = 0
+  var headSelectorsArr = []
+  var bodyClassesArr = []
+  var bodyIdsArr = []
 
-  let noThrowing = false
-  if (existy(settings) && existy(settings.noThrowing)) {
-    noThrowing = settings.noThrowing
+  var headSelectorStartedAt = 0
+  var bodyClassAttributeStartedAt = 0
+  var bodyIdAttributeStartedAt = 0
+  var bodyStartedAt = 0
+
+  var classStartedAt = 0
+  var classEndedAt = 0
+  var idStartedAt = 0
+  var idEndedAt = 0
+
+  var beingCurrentlyAt = 0
+  var checkingInsideCurlyBraces = false
+  var insideCurlyBraces = false
+
+  var regexEmptyStyleTag = /[\n]?\s*<style[^>]*>\s*<\/style\s*>/g
+  var regexEmptyMediaQuery = /[\n]?\s*@media[^{]*{\s*}/g
+
+  // insurance
+  if (typeof str !== 'string') {
+    throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_01] Input must be string! Currently it\'s ' + typeof str)
   }
-
-  let parsedTree
-  if (existy(settings) && existy(settings.parsedTree)) {
-    treeInputMode = true
-    parsedTree = settings.parsedTree
-    htmlContentsAsString = render(treeInputMode)
-  } else {
-    if (htmlContentsAsString === null) {
-      return htmlContentsAsString
-    }
-    if (!existy(htmlContentsAsString)) {
-      return
-    }
-    if (typeof htmlContentsAsString !== 'string') {
-      return htmlContentsAsString
-    }
-  }
-
-  // identify is it HTML or XHTML, to be used when rendering-back the AST
-  let closingSingleTag = 'default'
-  if (detect(htmlContentsAsString) === 'xhtml') {
-    closingSingleTag = 'slash'
-  }
-
-//
-//
-//
-
-  try {
-    //
-    // PART I. Get all styles from within <head>
-    //
-
-    let htmlAstObj
-    if (treeInputMode) {
-      htmlAstObj = parsedTree
+  if (!isObj(opts)) {
+    if (opts === undefined || opts === null) {
+      opts = {}
     } else {
-      htmlAstObj = parser(htmlContentsAsString)
+      throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_02] Options, second input argument, must be a plain object! Currently it\'s ' + typeof opts + ', equal to: ' + JSON.stringify(opts, null, 4))
+    }
+  }
+
+  // checking opts
+  var defaults = {
+    whitelist: []
+  }
+  opts = Object.assign(defaults, opts)
+  if (!isArr(opts.whitelist)) {
+    throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_03] opts.whitelist should be an array, but it was customised to a wrong thing, ' + JSON.stringify(opts.whitelist, null, 4))
+  }
+
+//
+//                       .----------------.
+//                      | .--------------. |
+//                      | |     __       | |
+//                      | |    /  |      | |
+//                      | |    `| |      | |
+//                      | |     | |      | |
+//                      | |    _| |_     | |
+//                      | |   |_____|    | |
+//                      | |              | |
+//                      | '--------------' |
+//                       '----------------'
+//
+// in this round we traverse the whole string, looking for two things:
+// 1. any style tags (which can be even within <body>) and
+// 2. and "class=" or "id=" attributes
+// we compile all of 1) findings into zz; and all of 2) findings into yy
+
+  for (let i = 0, len = str.length; i < len; i++) {
+    let chr = str[i]
+
+    // pinpoint any <style... tag, anywhere within the given HTML
+    // ================
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '<style') {
+      for (let y = i; y < len; y++) {
+        if (str[y] === '>') {
+          styleStartedAt = y + 1
+          break
+        }
+      }
+      // console.log('styleStartedAt = ' + JSON.stringify(styleStartedAt, null, 4))
     }
 
-    let allStyleTags = findTag(htmlAstObj, {tag: 'style'})
-    let allStyleTagSelectors = []
-    allStyleTags.forEach(function (el, i) {
-      allStyleTagSelectors = allStyleTagSelectors.concat(_.flattenDeep(getAllValuesByKey(css.parse(allStyleTags[i].content[0]), 'selectors')))
-    })
-    allStyleTagSelectors = _.uniq(allStyleTagSelectors)
+    // pinpoint closing style tag, </style>
+    // ================
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '/style') {
+      styleEndedAt = i - 1
+      // console.log('styleEndedAt = ' + JSON.stringify(styleEndedAt, null, 4))
+    }
 
-    let allClassesAndIdsWithinHead = []
+    // pinpoint closing curly braces
+    // ================
+    if (checkingInsideCurlyBraces && (chr === '}')) {
+      checkingInsideCurlyBraces = false
+      insideCurlyBraces = false
+    }
 
-    allStyleTagSelectors.forEach(function (el, i) {
-      allClassesAndIdsWithinHead.push(extract(el))
-    })
+    // pinpoint opening curly braces
+    // ================
+    if (checkingInsideCurlyBraces && (chr === '{')) {
+      insideCurlyBraces = true
+    }
 
-    allClassesAndIdsWithinHead = _.uniq(_.flattenDeep(allClassesAndIdsWithinHead, ''))
-    let unwhitelistedAllClassesAndIdsWithinHead = _.clone(allClassesAndIdsWithinHead)
-    allClassesAndIdsWithinHead = pullAllWithGlob(allClassesAndIdsWithinHead, whitelist)
+    // catch opening dot or hash
+    // ================
+    if (
+      styleStartedAt &&
+      (i >= styleStartedAt) &&
+      // (!styleEndedAt || (i > styleEndedAt)) &&
+      (
+        // a) either it's the first style tag and currently we haven't traversed
+        // it's closing yet:
+        ((styleEndedAt === 0) && (i >= styleStartedAt)) ||
+        // b) or, style tag was closed, later another-one was opened and we
+        // haven't traversed through its closing tag yet:
+        ((styleStartedAt > styleEndedAt) && (styleStartedAt < i))
+      ) &&
+      ((chr === '.') || (chr === '#')) &&
+      (i >= beingCurrentlyAt) &&
+      !insideCurlyBraces
+    ) {
+      checkingInsideCurlyBraces = true
+      headSelectorStartedAt = i
+      for (let y = i; y < len; y++) {
+        if (!characterSuitableForNames(str[y])) {
+          headSelectorsArr.push(str.slice(headSelectorStartedAt, y))
+          beingCurrentlyAt = y
+          break
+        }
+      }
+    }
 
-    //
-    // PART II. Get all inline styles from within <body>
-    //
+    // get opening body tag
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}` === '<body') {
+      for (let y = i; y < len; y++) {
+        if (str[y] === '>') {
+          bodyStartedAt = y + 1
+          break
+        }
+      }
+      // console.log('bodyStartedAt = ' + JSON.stringify(bodyStartedAt, null, 4))
+    }
 
-    let allClassesWithinBodyRawContentsArray = getAllValuesByKey(htmlAstObj, 'class')
-    allClassesWithinBodyRawContentsArray.forEach(function (el, i) {
-      allClassesWithinBodyRawContentsArray[i] = el.split(' ')
-    })
-    allClassesWithinBodyRawContentsArray = util.prependToEachElIfMissing(_.without(_.flattenDeep(allClassesWithinBodyRawContentsArray), ''))
+    // catch opening of a class attribute
+    // ================
+    if (
+      (bodyStartedAt !== 0) &&
+      (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === 'class="')
+    ) {
+      bodyClassAttributeStartedAt = i + 6
+    }
 
-    let allIdsWithinBodyRaw = getAllValuesByKey(htmlAstObj, 'id')
-    allIdsWithinBodyRaw.forEach(function (el, i) {
-      allIdsWithinBodyRaw[i] = el.split(' ')
-    })
-    allIdsWithinBodyRaw = util.prependToEachElIfMissing(_.without(_.flattenDeep(allIdsWithinBodyRaw), ''), '#')
-    let allClassesAndIdsWithinBody = allClassesWithinBodyRawContentsArray.concat(allIdsWithinBodyRaw)
-    let unwhitelistedAllClassesAndIdsWithinBody = _.clone(allClassesAndIdsWithinBody)
-    allClassesAndIdsWithinBody = pullAllWithGlob(allClassesAndIdsWithinBody, whitelist)
+    // catch opening of an id attribute
+    // ================
+    if (
+      (bodyStartedAt !== 0) &&
+      (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}` === 'id="')
+    ) {
+      bodyIdAttributeStartedAt = i + 3
+    }
 
-    //
-    // PART III. Compile to-be-deleted class names, within <body> and within <head>
-    //
+    // stop the class attribute's recording if closing double quote encountered
+    // ================
+    if ((bodyClassAttributeStartedAt !== 0) && (chr === '"') && (i > bodyClassAttributeStartedAt)) {
+      bodyClassAttributeStartedAt = 0
+    }
 
-    let headCssToDelete = _.clone(allClassesAndIdsWithinHead)
-    _.pullAll(headCssToDelete, allClassesAndIdsWithinBody)
-    // console.log('\n* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4))
+    // stop the id attribute's recording if closing double quote encountered
+    // ================
+    if ((bodyIdAttributeStartedAt !== 0) && (chr === '"') && (i > bodyIdAttributeStartedAt)) {
+      bodyIdAttributeStartedAt = 0
+    }
 
-    let bodyCssToDelete = _.clone(allClassesAndIdsWithinBody)
-    _.pullAll(bodyCssToDelete, allClassesAndIdsWithinHead)
-    // console.log('* bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4) + '\n')
+    // catch first letter within each class attribute
+    // ================
+    if (
+      bodyClassAttributeStartedAt &&
+      i > bodyClassAttributeStartedAt &&
+      characterSuitableForNames(chr) &&
+      (classStartedAt === 0)
+    ) {
+      classStartedAt = i
+    }
 
-    //
-    // PART IV. Delete classes from <head>
-    //
+    // catch whole class
+    // ================
+    if (
+      (classStartedAt !== 0) &&
+      (i > classStartedAt) &&
+      !characterSuitableForNames(chr)
+    ) {
+      bodyClassesArr.push(`.${str.slice(classStartedAt, i)}`)
+      classStartedAt = 0
+    }
 
-    let deletedFromHead = _.clone(headCssToDelete)
-    allStyleTags.forEach(function (el, i) {
-      let parsedCSS = css.parse(el.content[0])
-      let allSelectors = getAllValuesByKey(parsedCSS, 'selectors')
-      let allSelectorsCopy = _.clone(allSelectors)
-      allSelectorsCopy.forEach(function (elem1, index1) {
-        elem1.forEach(function (elem2, index2) {
-          // prepare the deletedFromHead array.
-          // some sandwiched classes/id's can be in multiple places.
-          // One of places can delete a sandwiched class/id, but it might be present in other, legit  locations.
-          // We can't put the deleted class/id into headCssToDelete[] because that would delete them everywhere!
-          // Therefore, sandwiched deleted classes/id's go to separate array, which is later output as "deleted". Technically, it's "deleted at least in one place, not necessarily everywhere".
-          for (i = 0, len = headCssToDelete.length; i < len; i++) {
-            if (_.includes(extract(allSelectorsCopy[index1][index2]), headCssToDelete[i])) {
-              // extract and add about-to-be-deleted classes into headCssToDelete array:
-              // that's missing sandwiched classes
-              deletedFromHead = _.uniq(deletedFromHead.concat(extract(allSelectorsCopy[index1][index2])))
-            }
+    // catch first letter within each id attribute
+    // ================
+    if (
+      bodyIdAttributeStartedAt &&
+      i > bodyIdAttributeStartedAt &&
+      characterSuitableForNames(chr) &&
+      (idStartedAt === 0)
+    ) {
+      idStartedAt = i
+    }
+
+    // catch whole id
+    // ================
+    if (
+      (idStartedAt !== 0) &&
+      (i > idStartedAt) &&
+      !characterSuitableForNames(chr)
+    ) {
+      bodyIdsArr.push(`#${str.slice(idStartedAt, i)}`)
+      idStartedAt = 0
+    }
+  }
+
+  //         F R U I T S   O F   T H E   L A B O U R
+
+  let allClassesAndIdsWithinBody = bodyClassesArr.concat(bodyIdsArr)
+
+  if (MAINDEBUG) { console.log('headSelectorsArr = ' + JSON.stringify(headSelectorsArr, null, 4)) }
+  if (MAINDEBUG) { console.log('bodyClassesArr = ' + JSON.stringify(bodyClassesArr, null, 4)) }
+  if (MAINDEBUG) { console.log('bodyIdsArr = ' + JSON.stringify(bodyIdsArr, null, 4)) }
+  if (MAINDEBUG) { console.log('allClassesAndIdsWithinBody = ' + JSON.stringify(allClassesAndIdsWithinBody, null, 4)) }
+  if (MAINDEBUG) { console.log('\nopts.whitelist = ' + JSON.stringify(opts.whitelist, null, 4)) }
+
+  //
+  //               A F T E R   T R A V E R S A L
+  //
+
+  // compile list of to-be-terminated
+  // ================
+
+  var allClassesAndIdsWithinHead = uniq(headSelectorsArr.reduce((arr, el) => arr.concat(extract(el)), []))
+  if (MAINDEBUG) { console.log('allClassesAndIdsWithinHead = ' + JSON.stringify(allClassesAndIdsWithinHead, null, 4)) }
+
+  // to avoid false positives, let's apply two cycles when removing unused classes/id's from head:
+
+  // ---------------------------------------
+  // TWO-CYCLE UNUSED CSS IDENTIFICATION:
+  // ---------------------------------------
+
+  // cycle #1 - remove comparing separate classes/id's from body against
+  // potentially sandwitched lumps from head. Let's see what's left afterwards.
+  // ================
+
+  let preppedHeadSelectorsArr = Array.from(headSelectorsArr)
+  let deletedFromHeadArr = []
+  for (let y = 0, len = preppedHeadSelectorsArr.length; y < len; y++) {
+    // preppedHeadSelectorsArr[y]
+    let temp
+    if (existy(preppedHeadSelectorsArr[y])) {
+      temp = extract(preppedHeadSelectorsArr[y])
+    }
+    if (!temp.every(el => allClassesAndIdsWithinBody.includes(el))) {
+      deletedFromHeadArr.push(...extract(preppedHeadSelectorsArr[y]))
+      preppedHeadSelectorsArr.splice(y, 1)
+      y--
+      len--
+    }
+  }
+
+  deletedFromHeadArr = pullAllWithGlob(deletedFromHeadArr, opts.whitelist)
+
+  var preppedAllClassesAndIdsWithinHead
+  if (preppedHeadSelectorsArr.length > 0) {
+    preppedAllClassesAndIdsWithinHead = preppedHeadSelectorsArr.reduce((arr, el) => arr.concat(extract(el)), [])
+  } else {
+    preppedAllClassesAndIdsWithinHead = []
+  }
+
+  // cycle #2 - now treat remaining lumps as definite sources of
+  // "what classes or id's are present in the head"
+  // use "preppedAllClassesAndIdsWithinHead" as a head selector reference when comparing
+  // against the body classes/id's.
+  // ================
+
+  let headCssToDelete = clone(allClassesAndIdsWithinHead)
+  pullAll(headCssToDelete, bodyClassesArr.concat(bodyIdsArr))
+  headCssToDelete = pullAllWithGlob(uniq(headCssToDelete), opts.whitelist)
+  if (MAINDEBUG) { console.log('\n* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
+
+  let bodyCssToDelete = pullAllWithGlob(pullAll(bodyClassesArr.concat(bodyIdsArr), preppedAllClassesAndIdsWithinHead), opts.whitelist)
+  if (MAINDEBUG) { console.log('* bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4)) }
+  bodyCssToDelete = uniq(bodyCssToDelete)
+
+  let bodyClassesToDelete = bodyCssToDelete.filter(s => s.startsWith('.')).map(s => s.slice(1))
+  if (MAINDEBUG) { console.log('bodyClassesToDelete = ' + JSON.stringify(bodyClassesToDelete, null, 4)) }
+  let bodyIdsToDelete = bodyCssToDelete.filter(s => s.startsWith('#')).map(s => s.slice(1))
+  if (MAINDEBUG) { console.log('bodyIdsToDelete = ' + JSON.stringify(bodyIdsToDelete, null, 4)) }
+
+//
+//                       .----------------.
+//                      | .--------------. |
+//                      | |    _____     | |
+//                      | |   / ___ `.   | |
+//                      | |  |_/___) |   | |
+//                      | |   .'____.'   | |
+//                      | |  / /_____    | |
+//                      | |  |_______|   | |
+//                      | |              | |
+//                      | '--------------' |
+//                       '----------------'
+//
+
+//
+//             T H E   S E C O N D   T R A V E R S A L
+//
+
+  // remove the unused head styles
+  // ================
+  styleStartedAt = 0
+  styleEndedAt = 0
+  for (i = 0, len = str.length; i < len; i++) {
+    let chr = str[i]
+
+    // pinpoint any <style... tag, anywhere within the given HTML
+    // ================
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '<style') {
+      for (let y = i; y < len; y++) {
+        if (str[y] === '>') {
+          styleStartedAt = y + 1
+          break
+        }
+      }
+      // console.log('styleStartedAt = ' + JSON.stringify(styleStartedAt, null, 4))
+    }
+
+    // pinpoint closing style tag, </style>
+    // ================
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '/style') {
+      styleEndedAt = i - 1
+    }
+
+    // prep the head
+    // ================
+    if (
+      styleStartedAt &&
+      (i >= styleStartedAt) &&
+      (
+        // a) either it's the first style tag and currently we haven't traversed
+        // it's closing yet:
+        ((styleEndedAt === 0) && (i >= styleStartedAt)) ||
+        // b) or, style tag was closed, later another-one was opened and we
+        // haven't traversed through its closing tag yet:
+        ((styleStartedAt > styleEndedAt) && (styleStartedAt < i))
+      ) &&
+      ((chr === '.') || (chr === '#')) // &&
+    ) {
+      // march backwards, for example, to catch "div" part in "div.name"
+      // because we stared from . or #
+      let realBeginningOfASelector = 0
+      let realEndingOfASelector = 0
+      let theresSomethingOnTheLeft = false
+      let theresSomethingOnTheRight = false
+      for (let z = i; z >= 0; z--) {
+        // console.log('traversing backwards: >>>>' + str[z] + '<<<<')
+        if (!realBeginningOfASelector && !characterSuitableForNames(str[z])) {
+          realBeginningOfASelector = z + 1
+          // console.log('\n> not suitable char found')
+          // console.log('> new slice is: ' + str.slice(realBeginningOfASelector, realBeginningOfASelector + 12) + '...')
+          continue
+          // break
+        }
+        if (realBeginningOfASelector && (str[z] !== ' ')) {
+          // console.log('\nFOUND FURTHER')
+          if (str[z] === ',') {
+            // console.log('COMMA')
+            realBeginningOfASelector = z + 1
+            theresSomethingOnTheLeft = true
           }
-          for (i = 0, len = headCssToDelete.length; i < len; i++) {
-            if (_.includes(extract(allSelectorsCopy[index1][index2]), headCssToDelete[i])) {
-              allSelectorsCopy[index1][index2] = ''
-            }
+          // console.log('BREAKING')
+          break
+        }
+      }
+
+      // march forward to include a pair of curly braces block if one follows
+      // and any line breaks as well. But only if there's nothing on the left.
+      // ================
+      for (let y = i; y < len; y++) {
+        if (theresSomethingOnTheLeft) {
+          if ((str[y] === ',') || (str[y] === '{')) {
+            if (str[y] === ',') {
+              theresSomethingOnTheRight = true
+              // catch any spaces after comma:
+              for (let z = y; z < len; z++) {
+                if (str[z] !== ' ') {
+                  realEndingOfASelector = z + 1
+                  break
+                }
+              }
+            } // else {
+            //   realEndingOfASelector = y
+            // }
+            break
           }
-        })
-      })
-
-      // console.log('1. allSelectorsCopy = ' + JSON.stringify(allSelectorsCopy, null, 4))
-      allSelectorsCopy.forEach(function (el, i) {
-        allSelectorsCopy[i] = _.without(allSelectorsCopy[i], '')
-      })
-      // console.log('2. allSelectorsCopy = ' + JSON.stringify(allSelectorsCopy, null, 4))
-      // finally, write over:
-      let erasedTest = getAllValuesByKey(css.parse(el.content[0]), 'selectors', allSelectorsCopy)
-
-      while (!equal(erasedTest, clean(erasedTest), {strict: true})) {
-        erasedTest = _.cloneDeep(clean(erasedTest))
-      }
-      let stringifiedErasedTest
-
-      if (existy(erasedTest) && nonEmpty(erasedTest.stylesheet)) {
-        stringifiedErasedTest = '\n' + css.stringify(erasedTest) + '\n'
-      } else {
-        // assign manually because css.stringify doesn't accept "{}"
-        stringifiedErasedTest = ''
-      }
-      el.content[0] = stringifiedErasedTest
-    })
-
-    allStyleTags.forEach(function (el, i) {
-      if ((el.tag === 'style') && (el.content.length === 1) && (el.content[0].length === 0)) {
-        allStyleTags[i] = ''
-      }
-    })
-    // Perform a secondary check, are all classes within <body> present in this cleaned selectors list.
-    // This is necessary to catch classes/id's that were in both <head> and <body> but all their occurencies
-    // in <head> were sandwiched with non-existent classes/id's and therefore deleted.
-    // See test 01.03. Released v1.2.0.
-    let redundantOnes = []
-    let found = true
-    let remainingClassesAndIdsWithinBody = _.uniq(_.pullAll(allClassesAndIdsWithinBody, bodyCssToDelete))
-
-    remainingClassesAndIdsWithinBody.forEach(function (el, i) {
-      found = false
-
-      allStyleTags.forEach(function (el2, i2) {
-        if (Object.keys(el2).length === 0) {
-          found = false
         } else {
-          if (aContainsB(el2.content[0], el)) {
-            found = true
+          if ((str[y] === ',') || (str[y] === '{')) {
+            if (str[y] === ',') {
+              // just catch all spaces that follow comma and stop
+              theresSomethingOnTheRight = true
+              for (let z = y + 1; z < len; z++) {
+                if (str[z] !== ' ') {
+                  realEndingOfASelector = z - 1
+                  break
+                }
+              }
+              break
+            } else if (str[y] === '{') {
+              // traverse all the way inside curly brace until closing brace,
+              // then add spaces after it, up until line break
+              for (let z = y + 1; z < len; z++) {
+                if (str[z] === '}') {
+                  realEndingOfASelector = z
+                  // catch all trailing spaces after comma
+                  for (let w = realEndingOfASelector + 1; w < len; w++) {
+                    if (str[w] !== ' ') {
+                      realEndingOfASelector = w
+                      break
+                    }
+                  }
+                  break
+                }
+              }
+              break
+            }
           }
         }
-      })
-      if (!found) {
-        redundantOnes.push(el)
       }
-    })
-    bodyCssToDelete = bodyCssToDelete.concat(redundantOnes)
 
-    // write
-    htmlAstObj = findTag(htmlAstObj, {tag: 'style'}, allStyleTags)
+      // don't forget the indentation too!
+      // ================
+      if (!theresSomethingOnTheLeft && !theresSomethingOnTheRight) {
+        for (let z = realBeginningOfASelector - 1; z >= 0; z--) {
+          if (str[z] !== ' ') {
+            if (str[z] === '\n') {
+              // catch multiple line breaks in front, not only the first-one
+              for (let w = z - 1; w >= 0; w--) {
+                if (str[w] !== '\n') {
+                  realBeginningOfASelector = w + 1
+                  break
+                }
+              }
+            }
+            break
+          }
+        }
+      }
 
-    //
-    // PART V. Delete classes from within <body>
-    //
+      // again extract classes and see if any are in the Wanted list
+      // ================
+      let headExtracted = extract(str.slice(realBeginningOfASelector, realEndingOfASelector))
+      if (intersection(headExtracted, headCssToDelete).length > 0) {
+        //
+        // delete the head selectors:
+        // ================
+        let compensation = realEndingOfASelector - realBeginningOfASelector
+        str = str.slice(0, realBeginningOfASelector) + str.slice(realEndingOfASelector)
 
-    let allBodyClasses = getAllValuesByKey(htmlAstObj, 'class')
-    let allBodyIds = getAllValuesByKey(htmlAstObj, 'id')
-
-    let splitBodyClasses
-    let splitBodyIds
-
-    // ==============================
-    // prep classes:
-    for (i = 0, len = allBodyClasses.length; i < len; i++) {
-      splitBodyClasses = allBodyClasses[i].split(' ')
-      splitBodyClasses = util.prependToEachElIfMissing(_.uniq(_.without(splitBodyClasses, '')))
-      allBodyClasses[i] = util.unprependToEachElIfPresent(_.difference(splitBodyClasses, bodyCssToDelete), '.').join(' ')
+        // fix the loop counters:
+        // ================
+        len = len - compensation
+        i = i - (i - realBeginningOfASelector + 1)
+      } else {
+        // if the piece of code is used, offset the index forward, so as not to scan
+        // starting from the second character onwards, again
+        // ================
+        i = i + (realEndingOfASelector - realBeginningOfASelector) - (i - realBeginningOfASelector + 1)
+      }
     }
-    // write classes (notice third input argument)
-    htmlAstObj = getAllValuesByKey(htmlAstObj, 'class', allBodyClasses)
-    // ==============================
-    // prep ids:
-    for (i = 0, len = allBodyIds.length; i < len; i++) {
-      splitBodyIds = allBodyIds[i].split(' ')
-      splitBodyIds = util.prependToEachElIfMissing(_.uniq(_.without(splitBodyIds, '')), '#')
-      allBodyIds[i] = util.unprependToEachElIfPresent(_.difference(splitBodyIds, bodyCssToDelete), '#').join(' ')
-    }
-    // write ids (notice third input argument)
-    htmlAstObj = getAllValuesByKey(htmlAstObj, 'id', allBodyIds)
-    // ==============================
-    // clean up
-    htmlAstObj = deleteKey(htmlAstObj, {key: 'class', val: ''})
-    htmlAstObj = deleteKey(htmlAstObj, {key: 'id', val: ''})
-    htmlAstObj = deleteKey(htmlAstObj, {key: '', only: 'arrays'})
-    htmlAstObj = del(htmlAstObj, {tag: 'style'}, {hungryForWhitespace: true, matchKeysStrictly: true})
-    htmlAstObj = del(htmlAstObj, {tag: 'style', attrs: {type: 'text/css'}}, {hungryForWhitespace: true, matchKeysStrictly: true})
-    htmlAstObj = removeConsecutiveEmptySpaceStrings(htmlAstObj)
+  }
 
+//                       .----------------.
+//                      | .--------------. |
+//                      | |    ______    | |
+//                      | |   / ____ `.  | |
+//                      | |   `'  __) |  | |
+//                      | |   _  |__ '.  | |
+//                      | |  | \____) |  | |
+//                      | |   \______.'  | |
+//                      | |              | |
+//                      | '--------------' |
+//                       '----------------'
+
+//
+//             T H E   T H I R D   T R A V E R S A L
+//
+
+  // removing unused classes & id's from body
+  // ================
+  for (i = str.indexOf('<body'), len = str.length; i < len; i++) {
     //
-    // FINALE. Prep and return
+    // 1. identify and remove unused classes from body:
+    // ================
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === 'class="') {
+      classStartedAt = i + 7
+      for (let y = i + 7; y < len; y++) {
+        if (str[y] === '"') {
+          classEndedAt = y
+          break
+        }
+      }
+
+      let extractedClassArr = pullAll(str.slice(classStartedAt, classEndedAt).split(' '), ['']).map(el => el.trim())
+
+      let whatsLeft = pullAll(Array.from(extractedClassArr), bodyClassesToDelete)
+      if (whatsLeft.length > 0) {
+        whatsLeft = 'class="' + whatsLeft.join(' ') + '"'
+      } else {
+        whatsLeft = ''
+      }
+      // remove whole class attribute, mutating the string:
+      str = str.slice(0, i) + whatsLeft + str.slice(classEndedAt + 1)
+      // fix the loop's counters:
+      len = len - ((classEndedAt - i) - whatsLeft.length) - 1
+      i = i + whatsLeft.length - 1
+      // if whole class attribute was removed and it was the last attr. in the tag,
+      // and the following character is closing bracket, we remove this remaining
+      // space character, so that bracket follows whatever was left.
+      // otherwise you'd get cases like <table > instead of <table> after deletion.
+      if (str[i] === ' ') {
+        let deleteFrom = null
+        let deleteUpTo = null
+        for (let y = i + 1; y < len; y++) {
+          if (str[y] !== ' ') {
+            if (str[y] === '>') {
+              deleteUpTo = y + 1
+              break
+            } else {
+              deleteUpTo = y
+              break
+            }
+          }
+        }
+        for (let y = i - 1; y > 0; y--) {
+          if (str[y] !== ' ') {
+            deleteFrom = y + 1
+            break
+          }
+        }
+        if ((deleteFrom !== null) && (deleteUpTo !== null)) {
+          str = str.slice(0, deleteFrom) + str.slice(deleteUpTo - 1)
+          len = len - (deleteUpTo - deleteFrom) + 1
+          i = i - (deleteUpTo - deleteFrom) + 1
+        }
+      }
+    }
     //
+    // 2. identify and remove unused id's from body:
+    // ================
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}` === 'id="') {
+      idStartedAt = i + 4
+      for (let y = i + 4; y < len; y++) {
+        if (str[y] === '"') {
+          idEndedAt = y
+          break
+        }
+      }
 
-    // console.log('htmlAstObj = ' + JSON.stringify(htmlAstObj, null, 4))
-    let toBeReturned
-    if (treeInputMode) {
-      toBeReturned = htmlAstObj
-    } else {
-      toBeReturned = render(htmlAstObj, { closingSingleTag: closingSingleTag })
+      let extractedIdsArr = pullAll(str.slice(idStartedAt, idEndedAt).split(' '), ['']).map(el => el.trim())
+
+      let whatsLeft = pullAll(Array.from(extractedIdsArr), bodyIdsToDelete)
+      if (whatsLeft.length > 0) {
+        whatsLeft = 'id="' + whatsLeft.join(' ') + '"'
+      } else {
+        whatsLeft = ''
+      }
+      // remove whole id attribute, mutating the string:
+      str = str.slice(0, i) + whatsLeft + str.slice(idEndedAt + 1)
+      // fix the loop's counters:
+      len = len - ((idEndedAt - i) - whatsLeft.length) - 1
+      i = i + whatsLeft.length - 1
+      // if whole id attribute was removed and it was the last attr. in the tag,
+      // and the following character is closing bracket, we remove this remaining
+      // space character, so that bracket follows whatever was left.
+      // otherwise you'd get cases like <table > instead of <table> after deletion.
+      if (str[i] === ' ') {
+        let deleteFrom = null
+        let deleteUpTo = null
+        for (let y = i + 1; y < len; y++) {
+          if (str[y] !== ' ') {
+            if (str[y] === '>') {
+              deleteUpTo = y + 1
+              break
+            } else {
+              deleteUpTo = y
+              break
+            }
+          }
+        }
+        for (let y = i - 1; y > 0; y--) {
+          if (str[y] !== ' ') {
+            deleteFrom = y + 1
+            break
+          }
+        }
+        if ((deleteFrom !== null) && (deleteUpTo !== null)) {
+          str = str.slice(0, deleteFrom) + str.slice(deleteUpTo - 1)
+          len = len - (deleteUpTo - deleteFrom) + 1
+          i = i - (deleteUpTo - deleteFrom) + 1
+        }
+      }
     }
+  }
 
-    return [toBeReturned, {
-      allInHead: unwhitelistedAllClassesAndIdsWithinHead,
-      allInBody: unwhitelistedAllClassesAndIdsWithinBody,
-      deletedFromHead: deletedFromHead,
-      deletedFromBody: bodyCssToDelete
-    }]
+  //
+  // FINAL FIXING:
+  // ================
 
-  // TRY ENDS BELOW
-  } catch (e) {
-    if (noThrowing) {
-      return ['the input code has problems, please check it']
-    } else {
-      throw new Error(e)
-    }
+  // remove empty style tags:
+
+  while (regexEmptyMediaQuery.test(str)) {
+    str = str.replace(regexEmptyMediaQuery, '')
+  }
+  str = str.replace(regexEmptyStyleTag, '\n')
+  str = str.replace('\u000A\n', '\n')
+  str = str.replace('\n\n', '\n')
+
+  // calculate duration taken:
+  // ================
+
+  // var endDate = new Date()
+  // var timeTaken = moment.utc(moment(endDate, 'DD/MM/YYYY HH:mm:ss').diff(moment(startdate, 'DD/MM/YYYY HH:mm:ss'))).format('HH:mm:ss')
+  // console.log('\n\ntimeTaken: ' + timeTaken)
+
+  return {
+    result: str,
+    allInHead: allClassesAndIdsWithinHead.sort(),
+    allInBody: allClassesAndIdsWithinBody.sort(),
+    deletedFromHead: uniq(deletedFromHeadArr.concat(headCssToDelete)).sort(),
+    deletedFromBody: bodyCssToDelete.sort()
   }
 }
 
