@@ -41,8 +41,7 @@ test('01.01 - removes classes and id\'s from HTML5 (normal input)', t => {
 </html>
 `).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -107,8 +106,7 @@ test('01.02 - removes classes and id\'s from HTML5 (input as RAW AST)', t => {
 </html>
 `).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -174,8 +172,7 @@ test('01.03 - deletes blank class/id attrs', t => {
 `
   ).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -210,7 +207,7 @@ test('01.03 - deletes blank class/id attrs', t => {
   )
 })
 
-test('01.04 - class present in both head and body, but head has it joined with nonexistent class', t => {
+test('01.04 - class present in both head and body, but head has it joined with nonexistent id', t => {
   actual = remove(`
 <!DOCTYPE html>
 <html lang="en">
@@ -218,7 +215,7 @@ test('01.04 - class present in both head and body, but head has it joined with n
   <meta charset="UTF-8">
   <title>test</title>
   <style type="text/css" media="screen">
-    .real-class-1#head-only-class-1, #head-only-class-2.real-class-1[lang|en]{ width:100% !important; }
+    .real-class-1#head-only-id-1, #head-only-id-2.real-class-1[lang|en]{ width:100% !important; }
   </style>
 </head>
 <body>
@@ -233,8 +230,7 @@ test('01.04 - class present in both head and body, but head has it joined with n
 </html>
 `).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -264,14 +260,14 @@ test('01.05 - multiple style tags recognised and transformed', t => {
 <html lang="en">
 <head>
 <style type="text/css">
-  .real-class-1#head-only-class-1[lang|en]{width:100% !important;}
+  .real-class-1#head-only-id-1[lang|en]{width:100% !important;}
   #real-id-1.head-only-class-1:hover{display: block !important;}
   .head-only-class-2[lang|en]{width: 100% !important;}
   #real-id-1{font-size: 10px !important;}
 </style>
 <title>zzzz</title>
 <style type="text/css">
-  .real-class-1#head-only-class-1[lang|en]{width:100% !important;}
+  .real-class-1#head-only-id-1[lang|en]{width:100% !important;}
   #real-id-1.head-only-class-1:hover{display: block !important;}
   .head-only-class-3[lang|en]{width: 100% !important;}
   div .real-class-1 a:hover {width: 50%;}
@@ -290,8 +286,7 @@ test('01.05 - multiple style tags recognised and transformed', t => {
 `
     ).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <style type="text/css">
@@ -327,7 +322,7 @@ test('01.06 - multiple levels of media queries cleaned', t => {
 <head>
 <style type="text/css">
   @media (max-width: 600px) {
-    .real-class-1#head-only-class-1[lang|en]{width:100% !important;}
+    .real-class-1#head-only-id-1[lang|en]{width:100% !important;}
     #real-id-1.head-only-class-1:hover{display: block !important;}
     .head-only-class-2[lang|en]{width: 100% !important;}
     @media (max-width: 200px) {
@@ -340,7 +335,7 @@ test('01.06 - multiple levels of media queries cleaned', t => {
 </style>
 <title>zzzz</title>
 <style type="text/css">
-  .real-class-1#head-only-class-1[lang|en]{width:100% !important;}
+  .real-class-1#head-only-id-1[lang|en]{width:100% !important;}
   #real-id-1.head-only-class-1:hover{display: block !important;}
   .head-only-class-3[lang|en]{width: 100% !important;}
   div .real-class-1 a:hover {width: 50%;}
@@ -359,8 +354,7 @@ test('01.06 - multiple levels of media queries cleaned', t => {
 `
     ).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <head>
 <style type="text/css">
   @media (max-width: 600px) {
@@ -431,8 +425,7 @@ test('01.07 - empty media queries removed', t => {
 </html>
 `).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <head>
 <title>zzzz</title>
 </head>
@@ -493,8 +486,7 @@ test('01.08 - style tags are outside HEAD', t => {
 </html>
 `).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <head>
 <title>zzzz</title>
 </head>
@@ -535,7 +527,8 @@ test('01.09 - removes media query together with the whole style tag #1', t => {
 </style></head>
 <body>
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!doctype html>
 <html>
@@ -546,7 +539,8 @@ test('01.09 - removes media query together with the whole style tag #1', t => {
 </head>
 <body>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -573,7 +567,8 @@ test('01.10 - removes media query together with the whole style tag #2', t => {
 <body class="_text-color  black">
 zzz
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!doctype html>
 <html>
@@ -591,7 +586,8 @@ zzz
 <body class="_text-color black">
 zzz
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -632,7 +628,8 @@ test('01.11 - removes three media queries together with the style tags', t => {
 </style></head>
 <body class="black">
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!doctype html>
 <html>
@@ -643,7 +640,8 @@ test('01.11 - removes three media queries together with the style tags', t => {
 </head>
 <body>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -667,7 +665,8 @@ color:  black;
 </style></head>
 <body>
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!doctype html>
 <html>
@@ -678,7 +677,8 @@ color:  black;
 </head>
 <body>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -705,7 +705,8 @@ test('01.13 - media query with asterisk', t => {
 </head>
 <body>
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!doctype html>
 <html>
@@ -716,7 +717,8 @@ test('01.13 - media query with asterisk', t => {
 </head>
 <body>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -743,7 +745,8 @@ test('01.14 - complex media query #1', t => {
 </head>
 <body class="black">
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!doctype html>
 <html>
@@ -754,7 +757,8 @@ test('01.14 - complex media query #1', t => {
 </head>
 <body>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -781,7 +785,8 @@ test('01.15 - complex media query #2', t => {
 </head>
 <body class="black">
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!doctype html>
 <html>
@@ -792,7 +797,8 @@ test('01.15 - complex media query #2', t => {
 </head>
 <body>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -825,8 +831,7 @@ test('01.16 - deletes multiple empty style tags', t => {
 </html>
 `).result
 
-  intended = `
-<!DOCTYPE html>
+  intended = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -857,7 +862,8 @@ test('01.16 - deletes multiple empty style tags', t => {
 test.skip('02.01 - nothing to remove, one img tag', t => {
   actual = remove('<img src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz"/>').result
 
-  intended = '<img src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz"/>'
+  intended = `<img src="image.jpg" width="zzz" height="zzz" border="0" style="display:block;" alt="zzz"/>
+`
 
   t.deepEqual(
     actual,
@@ -931,11 +937,11 @@ test.skip('02.03 - nothing to remove, respects XHTML images within', t => {
 </tr>
 </table>
 </body>
-</html>`
+</html>
+`
     ).result
 
-  intended = `
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  intended = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -950,7 +956,8 @@ test.skip('02.03 - nothing to remove, respects XHTML images within', t => {
 </tr>
 </table>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -978,7 +985,8 @@ test.skip('02.04 - fixes the IMG, HR, BR and META tags to be closed because of d
 </tr>
 </table>
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -998,7 +1006,8 @@ test.skip('02.04 - fixes the IMG, HR, BR and META tags to be closed because of d
 </tr>
 </table>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -1026,7 +1035,8 @@ test.skip('02.05 - doesn\'t fix the IMG, HR, BR and META tags because of doctype
 </tr>
 </table>
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<!DOCTYPE html>
 <html>
@@ -1046,7 +1056,8 @@ test.skip('02.05 - doesn\'t fix the IMG, HR, BR and META tags because of doctype
 </tr>
 </table>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -1069,8 +1080,7 @@ test('03.01 - missing closing TD, TR, TABLE will not throw', t => {
 `
     ).result
 
-  intended = `
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
+  intended = `<table width="100%" border="0" cellpadding="0" cellspacing="0">
 <tr>
   <td>
     some text
@@ -1083,7 +1093,7 @@ test('03.01 - missing closing TD, TR, TABLE will not throw', t => {
   )
 })
 
-test('03.03 - doesn\'t remove any other empty attributes besides class/id', t => {
+test('03.02 - doesn\'t remove any other empty attributes besides class/id', t => {
   actual = remove(`<html>
 <body>
   <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -1094,7 +1104,8 @@ test('03.03 - doesn\'t remove any other empty attributes besides class/id', t =>
     </tr>
   </table>
 </body>
-</html>`).result
+</html>
+`).result
 
   intended = `<html>
 <body>
@@ -1106,16 +1117,17 @@ test('03.03 - doesn\'t remove any other empty attributes besides class/id', t =>
     </tr>
   </table>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
     intended,
-    '03.03'
+    '03.02'
   )
 })
 
-test('03.04 - removes classes and id\'s from HTML even if it\'s heavily messed up', t => {
+test('03.03 - removes classes and id\'s from HTML even if it\'s heavily messed up', t => {
   actual = remove(`
 <title>Dummy HTML</title>
 <style type="text/css">
@@ -1137,8 +1149,7 @@ test('03.04 - removes classes and id\'s from HTML even if it\'s heavily messed u
 </table>
 </body>`).result
 
-  intended = `
-<title>Dummy HTML</title>
+  intended = `<title>Dummy HTML</title>
 <style type="text/css">
   .real-class-1:active, whatever[lang|en]{width:100% !important;}
   #real-id-1:hover{width:100% !important;}
@@ -1155,12 +1166,13 @@ test('03.04 - removes classes and id\'s from HTML even if it\'s heavily messed u
     </td>
   </tr>
 </table>
-</body>`
+</body>
+`
 
   t.deepEqual(
     actual,
     intended,
-    '03.04 - rubbish in, rubbish out, only rubbish-with-unused-CSS-removed-out!'
+    '03.03 - rubbish in, rubbish out, only rubbish-with-unused-CSS-removed-out!'
   )
 })
 
@@ -1170,7 +1182,8 @@ test('03.04 - removes classes and id\'s from HTML even if it\'s heavily messed u
 
 test('04.01 - doesn\'t affect emoji characters within the code', t => {
   actual = remove(`<td>🦄</td>`).result
-  intended = `<td>🦄</td>`
+  intended = `<td>🦄</td>
+`
 
   t.deepEqual(
     actual,
@@ -1181,7 +1194,8 @@ test('04.01 - doesn\'t affect emoji characters within the code', t => {
 
 test('04.02 - doesn\'t affect emoji characters within the attribute names', t => {
   actual = remove(`<td data-emoji="🦄">emoji</td>`).result
-  intended = `<td data-emoji="🦄">emoji</td>`
+  intended = `<td data-emoji="🦄">emoji</td>
+`
 
   t.deepEqual(
     actual,
@@ -1307,7 +1321,8 @@ test('06.02 - returned correct info object, clean HTML', t => {
 </tr>
 </table>
 </body>
-</html>`)
+</html>
+`)
 
   t.deepEqual(
     actual.allInHead,
@@ -1395,7 +1410,8 @@ test('06.04 - correct classes reported in info/deletedFromBody', t => {
 </tr>
 </table>
 </body>
-</html>`)
+</html>
+`)
 
   t.deepEqual(
     actual.allInHead,
@@ -1440,7 +1456,8 @@ test('06.05 - more sandwitched classes/ids cases', t => {
 </tr>
 </table>
 </body>
-</html>`)
+</html>
+`)
 
   t.deepEqual(
     actual.allInHead,
@@ -1491,7 +1508,8 @@ test('07.01 - nothing removed because of settings.whitelist', t => {
 </tr>
 </table>
 </body>
-</html>`,
+</html>
+`,
     {
       whitelist: ['.module-*', '.particular']
     }
@@ -1519,7 +1537,8 @@ test('07.01 - nothing removed because of settings.whitelist', t => {
 </tr>
 </table>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -1552,7 +1571,8 @@ test('07.02 - some removed, some whitelisted', t => {
 </tr>
 </table>
 </body>
-</html>`,
+</html>
+`,
     {
       whitelist: ['.module-*', '.particular']
     }
@@ -1579,7 +1599,8 @@ test('07.02 - some removed, some whitelisted', t => {
 </tr>
 </table>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
@@ -1612,7 +1633,8 @@ test('07.03 - case of whitelisting everything', t => {
 </tr>
 </table>
 </body>
-</html>`,
+</html>
+`,
     {
       whitelist: ['*']
     }
@@ -1641,11 +1663,104 @@ test('07.03 - case of whitelisting everything', t => {
 </tr>
 </table>
 </body>
-</html>`
+</html>
+`
 
   t.deepEqual(
     actual,
     intended,
     '07.03'
+  )
+})
+
+test('07.04 - special case - checking adjacent markers #1', t => {
+  actual = remove(`<style type="text/css">
+  .del-1{display: none;}
+  .real{display: none;}
+  .del-3{display: none;}
+</style>
+<body class="real">
+zzz
+</body>`).result
+
+  intended = `<style type="text/css">
+  .real{display: none;}
+</style>
+<body class="real">
+zzz
+</body>
+`
+
+  t.deepEqual(
+    actual,
+    intended,
+    '07.04'
+  )
+})
+
+test('07.05 - special case - checking adjacent markers #2', t => {
+  actual = remove(`<style type="text/css">.del-1{display: none;}.del-2{display: none;}.del-3{display: none;}</style>
+<body>
+zzz
+</body>`).result
+
+  intended = `<body>
+zzz
+</body>
+`
+
+  t.deepEqual(
+    actual,
+    intended,
+    '07.05'
+  )
+})
+
+test('07.06 - special case - checking spaces #1', t => {
+  actual = remove(`
+<style type="text/css">
+  .used {display: block;}
+  div~[^whatever] .del-1 {display: none;}
+</style>
+<body class="used">
+zzz
+</body>`).result
+
+  intended = `<style type="text/css">
+  .used {display: block;}
+</style>
+<body class="used">
+zzz
+</body>
+`
+
+  t.deepEqual(
+    actual,
+    intended,
+    '07.06'
+  )
+})
+
+test('07.07 - special case - checking spaces #2', t => {
+  actual = remove(`
+<style type="text/css">
+  .real, .unused {display: none;}
+</style>
+<body class="real">
+zzz
+</body>`).result
+
+  intended = `<style type="text/css">
+  .real {display: none;}
+</style>
+<body class="real">
+zzz
+</body>
+`
+
+  t.deepEqual(
+    actual,
+    intended,
+    '07.07'
   )
 })

@@ -1,6 +1,5 @@
 'use strict'
 
-// const sply = require('splice-string')
 // const moment = require('moment')
 const clone = require('lodash.clonedeep')
 const pullAll = require('lodash.pullall')
@@ -18,7 +17,6 @@ function emailRemoveUnusedCss (str, opts) {
   function existy (x) { return x != null }
   var MAINDEBUG = 0
   var i, len
-  // var startdate = new Date()
   var styleStartedAt = 0
   var styleEndedAt = 0
   var headSelectorsArr = []
@@ -41,6 +39,8 @@ function emailRemoveUnusedCss (str, opts) {
 
   var regexEmptyStyleTag = /[\n]?\s*<style[^>]*>\s*<\/style\s*>/g
   var regexEmptyMediaQuery = /[\n]?\s*@media[^{]*{\s*}/g
+
+  var finalIndexesToDelete = []
 
   // insurance
   if (typeof str !== 'string') {
@@ -81,7 +81,10 @@ function emailRemoveUnusedCss (str, opts) {
 // 2. and "class=" or "id=" attributes
 // we compile all of 1) findings into zz; and all of 2) findings into yy
 
+  var totalCounter = 0
+  var originalLength = str.length || 1
   for (let i = 0, len = str.length; i < len; i++) {
+    totalCounter++
     let chr = str[i]
 
     // pinpoint any <style... tag, anywhere within the given HTML
@@ -93,14 +96,12 @@ function emailRemoveUnusedCss (str, opts) {
           break
         }
       }
-      // console.log('styleStartedAt = ' + JSON.stringify(styleStartedAt, null, 4))
     }
 
     // pinpoint closing style tag, </style>
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '/style') {
       styleEndedAt = i - 1
-      // console.log('styleEndedAt = ' + JSON.stringify(styleEndedAt, null, 4))
     }
 
     // pinpoint closing curly braces
@@ -153,7 +154,6 @@ function emailRemoveUnusedCss (str, opts) {
           break
         }
       }
-      // console.log('bodyStartedAt = ' + JSON.stringify(bodyStartedAt, null, 4))
     }
 
     // catch opening of a class attribute
@@ -277,7 +277,7 @@ function emailRemoveUnusedCss (str, opts) {
     }
   }
 
-  deletedFromHeadArr = pullAllWithGlob(deletedFromHeadArr, opts.whitelist)
+  deletedFromHeadArr = uniq(pullAllWithGlob(deletedFromHeadArr, opts.whitelist))
 
   var preppedAllClassesAndIdsWithinHead
   if (preppedHeadSelectorsArr.length > 0) {
@@ -295,11 +295,16 @@ function emailRemoveUnusedCss (str, opts) {
   let headCssToDelete = clone(allClassesAndIdsWithinHead)
   pullAll(headCssToDelete, bodyClassesArr.concat(bodyIdsArr))
   headCssToDelete = pullAllWithGlob(uniq(headCssToDelete), opts.whitelist)
-  if (MAINDEBUG) { console.log('\n* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
+  if (MAINDEBUG) { console.log('\n* OLD headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
 
   let bodyCssToDelete = pullAllWithGlob(pullAll(bodyClassesArr.concat(bodyIdsArr), preppedAllClassesAndIdsWithinHead), opts.whitelist)
   if (MAINDEBUG) { console.log('* bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4)) }
   bodyCssToDelete = uniq(bodyCssToDelete)
+
+  // now that we know final to-be-deleted selectors list, compare them with `deletedFromHeadArr`
+  // and fill any missing CSS in `headCssToDelete`:
+  headCssToDelete = uniq(headCssToDelete.concat(intersection(deletedFromHeadArr, bodyCssToDelete))).sort()
+  if (MAINDEBUG) { console.log('\n* NEW headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
 
   let bodyClassesToDelete = bodyCssToDelete.filter(s => s.startsWith('.')).map(s => s.slice(1))
   if (MAINDEBUG) { console.log('bodyClassesToDelete = ' + JSON.stringify(bodyClassesToDelete, null, 4)) }
@@ -328,7 +333,10 @@ function emailRemoveUnusedCss (str, opts) {
   // ================
   styleStartedAt = 0
   styleEndedAt = 0
+
   for (i = 0, len = str.length; i < len; i++) {
+    totalCounter++
+
     let chr = str[i]
 
     // pinpoint any <style... tag, anywhere within the given HTML
@@ -340,13 +348,12 @@ function emailRemoveUnusedCss (str, opts) {
           break
         }
       }
-      // console.log('styleStartedAt = ' + JSON.stringify(styleStartedAt, null, 4))
     }
 
     // pinpoint closing style tag, </style>
     // ================
-    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '/style') {
-      styleEndedAt = i - 1
+    if (`${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === '/style') {
+      styleEndedAt = i
     }
 
     // prep the head
@@ -366,27 +373,39 @@ function emailRemoveUnusedCss (str, opts) {
     ) {
       // march backwards, for example, to catch "div" part in "div.name"
       // because we stared from . or #
+      // ================
       let realBeginningOfASelector = 0
       let realEndingOfASelector = 0
       let theresSomethingOnTheLeft = false
       let theresSomethingOnTheRight = false
+
+      let whitespaceStarted = i
       for (let z = i; z >= 0; z--) {
-        // console.log('traversing backwards: >>>>' + str[z] + '<<<<')
-        if (!realBeginningOfASelector && !characterSuitableForNames(str[z])) {
-          realBeginningOfASelector = z + 1
-          // console.log('\n> not suitable char found')
-          // console.log('> new slice is: ' + str.slice(realBeginningOfASelector, realBeginningOfASelector + 12) + '...')
-          continue
-          // break
-        }
-        if (realBeginningOfASelector && (str[z] !== ' ')) {
-          // console.log('\nFOUND FURTHER')
-          if (str[z] === ',') {
-            // console.log('COMMA')
-            realBeginningOfASelector = z + 1
-            theresSomethingOnTheLeft = true
+        // catch white space in front, so that when we will need to
+        // identify where CSS start, we know it's after this white space.
+        // It is necessary to cover selectors that have spaces, like: "div[^whatever] .class"
+        // ================
+        if (
+          (str[z].trim() === '')
+        ) {
+          if (!whitespaceStarted) {
+            whitespaceStarted = z
           }
-          // console.log('BREAKING')
+        } else {
+          whitespaceStarted = 0
+        }
+
+        // stopping clauses:
+        // ================
+        if ((str[z] === '}') || (str[z] === '{') || (str[z] === '>') || (str[z] === ',')) {
+          if (whitespaceStarted) {
+            realBeginningOfASelector = whitespaceStarted + 1
+          } else {
+            realBeginningOfASelector = z + 1
+          }
+          // if (str[z] === ',') {
+          //   realBeginningOfASelector--
+          // }
           break
         }
       }
@@ -406,9 +425,9 @@ function emailRemoveUnusedCss (str, opts) {
                   break
                 }
               }
-            } // else {
-            //   realEndingOfASelector = y
-            // }
+            } else {
+              realEndingOfASelector = y
+            }
             break
           }
         } else {
@@ -471,19 +490,18 @@ function emailRemoveUnusedCss (str, opts) {
         //
         // delete the head selectors:
         // ================
-        let compensation = realEndingOfASelector - realBeginningOfASelector
-        str = str.slice(0, realBeginningOfASelector) + str.slice(realEndingOfASelector)
-
-        // fix the loop counters:
-        // ================
-        len = len - compensation
-        i = i - (i - realBeginningOfASelector + 1)
+        if (
+          (finalIndexesToDelete.length > 0) &&
+          (finalIndexesToDelete[finalIndexesToDelete.length - 1][1] === realBeginningOfASelector)
+        ) {
+          finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = realEndingOfASelector
+        } else {
+          finalIndexesToDelete.push([realBeginningOfASelector, realEndingOfASelector])
+        }
       } else {
-        // if the piece of code is used, offset the index forward, so as not to scan
-        // starting from the second character onwards, again
-        // ================
-        i = i + (realEndingOfASelector - realBeginningOfASelector) - (i - realBeginningOfASelector + 1)
+        // the piece is not deleted, so increase the counter:
       }
+      i = i + (realEndingOfASelector - realBeginningOfASelector) - (i - realBeginningOfASelector + 1)
     }
   }
 
@@ -506,10 +524,13 @@ function emailRemoveUnusedCss (str, opts) {
   // removing unused classes & id's from body
   // ================
   for (i = str.indexOf('<body'), len = str.length; i < len; i++) {
+    totalCounter++
+
     //
     // 1. identify and remove unused classes from body:
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === 'class="') {
+      let deleteFrom
       classStartedAt = i + 7
       for (let y = i + 7; y < len; y++) {
         if (str[y] === '"') {
@@ -522,50 +543,36 @@ function emailRemoveUnusedCss (str, opts) {
 
       let whatsLeft = pullAll(Array.from(extractedClassArr), bodyClassesToDelete)
       if (whatsLeft.length > 0) {
-        whatsLeft = 'class="' + whatsLeft.join(' ') + '"'
+        whatsLeft = ' class="' + whatsLeft.join(' ') + '"'
       } else {
         whatsLeft = ''
       }
-      // remove whole class attribute, mutating the string:
-      str = str.slice(0, i) + whatsLeft + str.slice(classEndedAt + 1)
-      // fix the loop's counters:
-      len = len - ((classEndedAt - i) - whatsLeft.length) - 1
-      i = i + whatsLeft.length - 1
-      // if whole class attribute was removed and it was the last attr. in the tag,
-      // and the following character is closing bracket, we remove this remaining
-      // space character, so that bracket follows whatever was left.
-      // otherwise you'd get cases like <table > instead of <table> after deletion.
-      if (str[i] === ' ') {
-        let deleteFrom = null
-        let deleteUpTo = null
-        for (let y = i + 1; y < len; y++) {
-          if (str[y] !== ' ') {
-            if (str[y] === '>') {
-              deleteUpTo = y + 1
-              break
-            } else {
-              deleteUpTo = y
-              break
-            }
-          }
+
+      // traverse backwards to catch any multiple spaces:
+      // ================
+      for (let y = i - 1; y > 0; y--) {
+        if (str[y] !== ' ') {
+          deleteFrom = y + 1
+          break
         }
-        for (let y = i - 1; y > 0; y--) {
-          if (str[y] !== ' ') {
-            deleteFrom = y + 1
-            break
-          }
-        }
-        if ((deleteFrom !== null) && (deleteUpTo !== null)) {
-          str = str.slice(0, deleteFrom) + str.slice(deleteUpTo - 1)
-          len = len - (deleteUpTo - deleteFrom) + 1
-          i = i - (deleteUpTo - deleteFrom) + 1
-        }
+      }
+
+      // adding identified-to-be-deleted chunks into a to-detele list:
+      // ================
+      if (
+        (finalIndexesToDelete.length > 0) &&
+        (finalIndexesToDelete[finalIndexesToDelete.length - 1][1] === i)
+      ) {
+        finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = classEndedAt + 1
+      } else {
+        finalIndexesToDelete.push([deleteFrom, classEndedAt + 1, whatsLeft])
       }
     }
     //
     // 2. identify and remove unused id's from body:
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}` === 'id="') {
+      let deleteFrom
       idStartedAt = i + 4
       for (let y = i + 4; y < len; y++) {
         if (str[y] === '"') {
@@ -578,15 +585,31 @@ function emailRemoveUnusedCss (str, opts) {
 
       let whatsLeft = pullAll(Array.from(extractedIdsArr), bodyIdsToDelete)
       if (whatsLeft.length > 0) {
-        whatsLeft = 'id="' + whatsLeft.join(' ') + '"'
+        whatsLeft = ' id="' + whatsLeft.join(' ') + '"'
       } else {
         whatsLeft = ''
       }
-      // remove whole id attribute, mutating the string:
-      str = str.slice(0, i) + whatsLeft + str.slice(idEndedAt + 1)
-      // fix the loop's counters:
-      len = len - ((idEndedAt - i) - whatsLeft.length) - 1
-      i = i + whatsLeft.length - 1
+
+      // traverse backwards to catch any multiple spaces:
+      // ================
+      for (let y = i - 1; y > 0; y--) {
+        if (str[y] !== ' ') {
+          deleteFrom = y + 1
+          break
+        }
+      }
+
+      // adding identified-to-be-deleted chunks into a to-detele list:
+      // ================
+      if (
+        (finalIndexesToDelete.length > 0) &&
+        (finalIndexesToDelete[finalIndexesToDelete.length - 1][1] === i)
+      ) {
+        finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = idEndedAt + 1
+      } else {
+        finalIndexesToDelete.push([deleteFrom, idEndedAt + 1, whatsLeft])
+      }
+
       // if whole id attribute was removed and it was the last attr. in the tag,
       // and the following character is closing bracket, we remove this remaining
       // space character, so that bracket follows whatever was left.
@@ -612,33 +635,44 @@ function emailRemoveUnusedCss (str, opts) {
           }
         }
         if ((deleteFrom !== null) && (deleteUpTo !== null)) {
-          str = str.slice(0, deleteFrom) + str.slice(deleteUpTo - 1)
-          len = len - (deleteUpTo - deleteFrom) + 1
-          i = i - (deleteUpTo - deleteFrom) + 1
+          if (
+            (finalIndexesToDelete.length > 0) &&
+            (finalIndexesToDelete[finalIndexesToDelete.length - 1][1] === deleteFrom)
+          ) {
+            finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = deleteUpTo - 1
+          } else {
+            finalIndexesToDelete.push([deleteFrom, deleteUpTo - 1])
+          }
         }
       }
     }
   }
 
-  //
-  // FINAL FIXING:
+  // actual deletion:
   // ================
 
-  // remove empty style tags:
+  if (finalIndexesToDelete.length > 0) {
+    let tails = str.slice(finalIndexesToDelete[finalIndexesToDelete.length - 1][1])
+    str = finalIndexesToDelete.reduce((acc, val, i, arr) => {
+      let beginning = (i === 0) ? 0 : arr[i - 1][1]
+      let ending = arr[i][0]
+      return acc + str.slice(beginning, ending) + (existy(arr[i][2]) ? arr[i][2] : '')
+    }, '')
+    str += tails
+  }
 
+  if (MAINDEBUG) { console.log('totalCounter so far: ' + totalCounter) }
+  if (MAINDEBUG) { console.log('==========\nit took: ' + totalCounter / originalLength + ' times more char checks than total input char count.\n==========') }
+
+  // final fixing:
+  // ================
+  // remove empty style tags:
   while (regexEmptyMediaQuery.test(str)) {
     str = str.replace(regexEmptyMediaQuery, '')
   }
   str = str.replace(regexEmptyStyleTag, '\n')
   str = str.replace('\u000A\n', '\n')
-  str = str.replace('\n\n', '\n')
-
-  // calculate duration taken:
-  // ================
-
-  // var endDate = new Date()
-  // var timeTaken = moment.utc(moment(endDate, 'DD/MM/YYYY HH:mm:ss').diff(moment(startdate, 'DD/MM/YYYY HH:mm:ss'))).format('HH:mm:ss')
-  // console.log('\n\ntimeTaken: ' + timeTaken)
+  str = str.replace('\n\n', '\n').trim() + '\n'
 
   return {
     result: str,

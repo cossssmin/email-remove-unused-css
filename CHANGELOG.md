@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.1.0] - 2017-07-18
+
+### Changed
+- Improved the algorithm. Now three main traversal loops only gather the list of what needs to be deleted. The deletion happens once, at the bottom of the code. Previously, deletion was happening "on the spot", during second loop's traversal, when "bad" selector was detected. That caused overhead in the loop's maintenance - the source was being mutated hundreds of times (for each deletetion).
+
+As a result, even the largest emails with more than hundred thousand characters can be cleaned within miliseconds.
+
 ## [2.0.0] - 2017-07-16
 
 Pivoting on priorities. Now the most important is 1) corectness; but then 2) speed.
@@ -127,3 +134,4 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 [1.16.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.15.0...v1.16.0
 [1.17.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.16.0...v1.17.0
 [2.0.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.17.0...v2.0.0
+[2.1.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.0.0...v2.1.0
