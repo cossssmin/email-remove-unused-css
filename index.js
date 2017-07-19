@@ -66,7 +66,14 @@ function emailRemoveUnusedCss (str, opts) {
       finalIndexesToDelete[last][1] = Math.max(to, finalIndexesToDelete[last][1])
       // console.log(`updated last elem: [${finalIndexesToDelete[last][0]}, ${finalIndexesToDelete[last][1]}]`)
       if (whatsLeft !== undefined) {
-        finalIndexesToDelete[last][2] = (existy(finalIndexesToDelete[last][2]) && finalIndexesToDelete[last][2].length > 0) ? finalIndexesToDelete[last][2] + whatsLeft : whatsLeft
+        if (
+          existy(finalIndexesToDelete[last][2]) &&
+          (finalIndexesToDelete[last][2].length > 0)
+        ) {
+          finalIndexesToDelete[last][2] += whatsLeft
+        } else {
+          finalIndexesToDelete[last][2] = whatsLeft
+        }
       }
       // now, newly-owerwritten, last element of indexes array can itself overlap or
       // have smaller indexes than the element before it.
@@ -80,7 +87,14 @@ function emailRemoveUnusedCss (str, opts) {
             finalIndexesToDelete[y - 1][0] = Math.min(finalIndexesToDelete[y - 1][0], finalIndexesToDelete[y][0])
             finalIndexesToDelete[y - 1][1] = Math.max(finalIndexesToDelete[y - 1][1], finalIndexesToDelete[y][1])
             if (existy(finalIndexesToDelete[y][2])) {
-              finalIndexesToDelete[y - 1][2] = existy(finalIndexesToDelete[y - 1][2] && finalIndexesToDelete[y - 1][2].length > 0) ? finalIndexesToDelete[y - 1][2] + finalIndexesToDelete[y][2] : finalIndexesToDelete[y][2]
+              if (
+                existy(finalIndexesToDelete[y - 1][2]) &&
+                (finalIndexesToDelete[y - 1][2].length > 0)
+              ) {
+                finalIndexesToDelete[y - 1][2] += finalIndexesToDelete[y][2]
+              } else {
+                finalIndexesToDelete[y - 1][2] = finalIndexesToDelete[y][2]
+              }
             }
             // delete last element, the array finalIndexesToDelete[y]
             finalIndexesToDelete.pop()
