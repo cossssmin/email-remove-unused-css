@@ -4,12 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [2.1.0] - 2017-07-18
+## [2.1.0] - 2017-07-19
 
 ### Changed
-- Improved the algorithm. Now three main traversal loops only gather the list of what needs to be deleted. The deletion happens once, at the bottom of the code. Previously, deletion was happening "on the spot", during second loop's traversal, when "bad" selector was detected. That caused overhead in the loop's maintenance - the source was being mutated hundreds of times (for each deletetion).
+- Improved the algorithm, recoding whole second part (and more). Now three main traversal loops only **gather the list of what needs to be deleted**. The deletion happens **once**, at the bottom of the code. Previously, deletion was happening "on the spot", during second loop's traversal, when "bad" selector was detected. That caused overhead in the loop's maintenance - the source was being mutated hundreds of times (for each deletetion).
 
 As a result, even the largest emails with more than hundred thousand characters can be cleaned within miliseconds.
+
+I set up a `MAINDEBUG` variable/switch which, when turned on, shows how many characters were iterated through within all loops in total. Now, the total is usually between 2.5 and 3, but never exceeding 3 times the total input character count. This means, all the cleaning is done within less than three full loops over the input! So far, when testing on real 100K+ char length email HTML templates, I see no slowdown when cleaning.
 
 ## [2.0.0] - 2017-07-16
 

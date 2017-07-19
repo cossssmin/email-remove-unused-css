@@ -41,6 +41,60 @@ function emailRemoveUnusedCss (str, opts) {
   var regexEmptyMediaQuery = /[\n]?\s*@media[^{]*{\s*}/g
 
   var finalIndexesToDelete = []
+  function pushToFinalIndexesToDelete ([from, to, whatsLeft]) {
+    var last = null
+    if (finalIndexesToDelete.length > 0) {
+      last = finalIndexesToDelete.length - 1
+    }
+    if (
+      (last !== null) &&
+      (from === finalIndexesToDelete[last][1])
+    ) {
+      finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = to
+      if (whatsLeft !== undefined) {
+        finalIndexesToDelete[last][2] = (existy(finalIndexesToDelete[last][2]) && finalIndexesToDelete[last][2].length > 0) ? finalIndexesToDelete[last][2] + whatsLeft : whatsLeft
+      }
+    } else if (
+      (last !== null) &&
+      (
+        (from <= finalIndexesToDelete[last][1]) ||
+        (from <= finalIndexesToDelete[last][0])
+      )
+    ) {
+      // console.log(`current last elem: [${finalIndexesToDelete[last][0]}, ${finalIndexesToDelete[last][1]}]`)
+      finalIndexesToDelete[last][0] = Math.min(from, finalIndexesToDelete[last][0])
+      finalIndexesToDelete[last][1] = Math.max(to, finalIndexesToDelete[last][1])
+      // console.log(`updated last elem: [${finalIndexesToDelete[last][0]}, ${finalIndexesToDelete[last][1]}]`)
+      if (whatsLeft !== undefined) {
+        finalIndexesToDelete[last][2] = (existy(finalIndexesToDelete[last][2]) && finalIndexesToDelete[last][2].length > 0) ? finalIndexesToDelete[last][2] + whatsLeft : whatsLeft
+      }
+      // now, newly-owerwritten, last element of indexes array can itself overlap or
+      // have smaller indexes than the element before it.
+      // We need to traverse it backwards recursively and check/fix that.
+      for (let i = last; i > 0; i--) {
+        // console.log(`finalIndexesToDelete[${i}] = ` + JSON.stringify(finalIndexesToDelete[i], null, 4))
+        for (let y = i; y > 0; y--) {
+          if (MAINDEBUG) { totalCounter++ }
+          // console.log(` > finalIndexesToDelete[${y}] = ` + JSON.stringify(finalIndexesToDelete[y], null, 4))
+          if (finalIndexesToDelete[y][0] <= finalIndexesToDelete[y - 1][1]) {
+            finalIndexesToDelete[y - 1][0] = Math.min(finalIndexesToDelete[y - 1][0], finalIndexesToDelete[y][0])
+            finalIndexesToDelete[y - 1][1] = Math.max(finalIndexesToDelete[y - 1][1], finalIndexesToDelete[y][1])
+            if (existy(finalIndexesToDelete[y][2])) {
+              finalIndexesToDelete[y - 1][2] = existy(finalIndexesToDelete[y - 1][2] && finalIndexesToDelete[y - 1][2].length > 0) ? finalIndexesToDelete[y - 1][2] + finalIndexesToDelete[y][2] : finalIndexesToDelete[y][2]
+            }
+            // delete last element, the array finalIndexesToDelete[y]
+            finalIndexesToDelete.pop()
+            // fix the counter
+            i--
+          } else {
+            break
+          }
+        }
+      }
+    } else {
+      finalIndexesToDelete.push(whatsLeft ? [from, to, whatsLeft] : [from, to])
+    }
+  }
 
   // insurance
   if (typeof str !== 'string') {
@@ -84,13 +138,14 @@ function emailRemoveUnusedCss (str, opts) {
   var totalCounter = 0
   var originalLength = str.length || 1
   for (let i = 0, len = str.length; i < len; i++) {
-    totalCounter++
+    if (MAINDEBUG) { totalCounter++ }
     let chr = str[i]
 
     // pinpoint any <style... tag, anywhere within the given HTML
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '<style') {
       for (let y = i; y < len; y++) {
+        if (MAINDEBUG) { totalCounter++ }
         if (str[y] === '>') {
           styleStartedAt = y + 1
           break
@@ -138,6 +193,7 @@ function emailRemoveUnusedCss (str, opts) {
       checkingInsideCurlyBraces = true
       headSelectorStartedAt = i
       for (let y = i; y < len; y++) {
+        if (MAINDEBUG) { totalCounter++ }
         if (!characterSuitableForNames(str[y])) {
           headSelectorsArr.push(str.slice(headSelectorStartedAt, y))
           beingCurrentlyAt = y
@@ -149,6 +205,7 @@ function emailRemoveUnusedCss (str, opts) {
     // get opening body tag
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}` === '<body') {
       for (let y = i; y < len; y++) {
+        if (MAINDEBUG) { totalCounter++ }
         if (str[y] === '>') {
           bodyStartedAt = y + 1
           break
@@ -264,6 +321,7 @@ function emailRemoveUnusedCss (str, opts) {
   let preppedHeadSelectorsArr = Array.from(headSelectorsArr)
   let deletedFromHeadArr = []
   for (let y = 0, len = preppedHeadSelectorsArr.length; y < len; y++) {
+    if (MAINDEBUG) { totalCounter++ }
     // preppedHeadSelectorsArr[y]
     let temp
     if (existy(preppedHeadSelectorsArr[y])) {
@@ -333,16 +391,19 @@ function emailRemoveUnusedCss (str, opts) {
   // ================
   styleStartedAt = 0
   styleEndedAt = 0
+  let canDeleteWholeRow
 
   for (i = 0, len = str.length; i < len; i++) {
-    totalCounter++
+    if (MAINDEBUG) { totalCounter++ }
 
     let chr = str[i]
+    // console.log(`str[${i}]=` + str[i])
 
     // pinpoint any <style... tag, anywhere within the given HTML
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '<style') {
       for (let y = i; y < len; y++) {
+        if (MAINDEBUG) { totalCounter++ }
         if (str[y] === '>') {
           styleStartedAt = y + 1
           break
@@ -356,6 +417,7 @@ function emailRemoveUnusedCss (str, opts) {
       styleEndedAt = i
     }
 
+    let firstSelectorFound = false
     // prep the head
     // ================
     if (
@@ -371,137 +433,130 @@ function emailRemoveUnusedCss (str, opts) {
       ) &&
       ((chr === '.') || (chr === '#')) // &&
     ) {
-      // march backwards, for example, to catch "div" part in "div.name"
-      // because we stared from . or #
-      // ================
-      let realBeginningOfASelector = 0
-      let realEndingOfASelector = 0
-      let theresSomethingOnTheLeft = false
-      let theresSomethingOnTheRight = false
-
-      let whitespaceStarted = i
-      for (let z = i; z >= 0; z--) {
-        // catch white space in front, so that when we will need to
-        // identify where CSS start, we know it's after this white space.
-        // It is necessary to cover selectors that have spaces, like: "div[^whatever] .class"
-        // ================
-        if (
-          (str[z].trim() === '')
-        ) {
-          if (!whitespaceStarted) {
-            whitespaceStarted = z
+      // console.log('====================================================')
+      canDeleteWholeRow = true
+      // march backwards to catch:
+      // 1) outer left boundary from which we would delete the whole "line"
+      // 2) the beginning of a selector, such as "div" part in "div .class",
+      // since we start at full stop or hash and potentially miss the front bit.
+      // This marker is also meant to be used to delete certain parts from a line.
+      let markerOuterLeft
+      let markerInnerLeft = null
+      for (let y = i - 1; y > 0; y--) {
+        if (MAINDEBUG) { totalCounter++ }
+        // console.log(`<< str[${y}]=` + str[y])
+        // part 1):
+        if ((str[y] === '>') || (str[y] === '{') || (str[y] === '}')) {
+          markerOuterLeft = y + 1
+          // tending second "line" and the rest:
+          if (markerInnerLeft < markerOuterLeft) {
+            markerInnerLeft = markerOuterLeft
           }
-        } else {
-          whitespaceStarted = 0
-        }
-
-        // stopping clauses:
-        // ================
-        if ((str[z] === '}') || (str[z] === '{') || (str[z] === '>') || (str[z] === ',')) {
-          if (whitespaceStarted) {
-            realBeginningOfASelector = whitespaceStarted + 1
-          } else {
-            realBeginningOfASelector = z + 1
-          }
-          // if (str[z] === ',') {
-          //   realBeginningOfASelector--
-          // }
           break
         }
-      }
-
-      // march forward to include a pair of curly braces block if one follows
-      // and any line breaks as well. But only if there's nothing on the left.
-      // ================
-      for (let y = i; y < len; y++) {
-        if (theresSomethingOnTheLeft) {
-          if ((str[y] === ',') || (str[y] === '{')) {
-            if (str[y] === ',') {
-              theresSomethingOnTheRight = true
-              // catch any spaces after comma:
-              for (let z = y; z < len; z++) {
-                if (str[z] !== ' ') {
-                  realEndingOfASelector = z + 1
-                  break
-                }
-              }
-            } else {
-              realEndingOfASelector = y
-            }
-            break
+        // part 2):
+        if (str[y].trim() === '') {
+          if (!markerInnerLeft) {
+            markerInnerLeft = y + 1
           }
         } else {
-          if ((str[y] === ',') || (str[y] === '{')) {
-            if (str[y] === ',') {
-              // just catch all spaces that follow comma and stop
-              theresSomethingOnTheRight = true
-              for (let z = y + 1; z < len; z++) {
-                if (str[z] !== ' ') {
-                  realEndingOfASelector = z - 1
-                  break
-                }
+          markerInnerLeft = null
+        }
+      }
+      // console.log('\n\n\nmarkerOuterLeft:\n>>>>' + str.slice(markerOuterLeft, markerOuterLeft + 15) + '<<<<')
+      // console.log('\n')
+      // console.log('markerInnerLeft:\n>>>>' + str.slice(markerInnerLeft, markerInnerLeft + 15) + '<<<<\n\n\n')
+      // march forward to catch:
+      // 3) outer right boundary, up to which we would delete the whole "line".
+      // Practically, it's closing curly brace.
+      // 4) inner right boundary, either comma or opening curly brace. We will
+      // need it for partial deletions from a line.
+      let markerInnerRight
+      let markerOuterRight
+      let withinCurlie
+      for (let y = i; y < len; y++) {
+        if (str[y] === '{') {
+          withinCurlie = true
+        }
+        if (MAINDEBUG) { totalCounter++ }
+        if (str[y] === '}') {
+          withinCurlie = false
+          markerOuterRight = y + 1
+          firstSelectorFound = false
+          break
+        }
+        if (
+          (str[y] === '{') ||
+          ((str[y] === ',') && !withinCurlie)
+        ) {
+          let newMarkerInnerLeft
+          // we need to include all white space that follows comma too:
+          markerInnerRight = y
+          if (!firstSelectorFound && (str[y] === ',')) {
+            firstSelectorFound = true
+            // we need to catch the following white space as well because it's the first piece:
+            newMarkerInnerLeft = y
+            for (let z = y + 1; z < len; z++) {
+              if (MAINDEBUG) { totalCounter++ }
+              if (str[z].trim() !== '') {
+                markerInnerRight = z - 1
+                break
               }
-              break
-            } else if (str[y] === '{') {
-              // traverse all the way inside curly brace until closing brace,
-              // then add spaces after it, up until line break
-              for (let z = y + 1; z < len; z++) {
-                if (str[z] === '}') {
-                  realEndingOfASelector = z
-                  // catch all trailing spaces after comma
-                  for (let w = realEndingOfASelector + 1; w < len; w++) {
-                    if (str[w] !== ' ') {
-                      realEndingOfASelector = w
-                      break
-                    }
+            }
+            // console.log('\n1selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight + 1) + '<<<<')
+            if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight + 1)), headCssToDelete).length > 0) {
+              // delete this chunk
+              pushToFinalIndexesToDelete([markerInnerLeft, markerInnerRight + 1])
+            } else {
+              // don't delete, but prevent the deletion of the whole "line"
+              canDeleteWholeRow = false
+            }
+          } else {
+            // last chunk leading to opening curlie needs not to include the white space,
+            // because if it will be deleted, that white space will need to be retained.
+            // We're going to pull back the markerInnerRight marker for the last chunk:
+            // Also, if there is more than one white space character, we're going to add it
+            // to deletion list, leaving only a space.
+            if (str[y] === '{') {
+              let counter = -1
+              for (let z = y - 1; z > 0; z--) {
+                counter++
+                if (str[z].trim() !== '') {
+                  markerInnerRight = z + 1
+                  if (counter > 1) {
+                    // console.log('COUNTER=' + counter)
+                    // console.log(`PUSHING TO DELETE: [markerInnerRight, y] = [${markerInnerRight}, ${y}]`)
+                    pushToFinalIndexesToDelete([markerInnerRight, y, ' '])
                   }
                   break
                 }
               }
-              break
             }
+            // console.log('\n2selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight) + '<<<<')
+            if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete).length > 0) {
+              // delete this chunk
+              pushToFinalIndexesToDelete([markerInnerLeft, markerInnerRight])
+            } else {
+              // don't delete, but prevent the deletion of the whole "line"
+              canDeleteWholeRow = false
+            }
+            newMarkerInnerLeft = markerInnerRight
+          }
+          // we offset the main index so that we don't hit the second and
+          // subsequential selectors (".class2" in ".class1.class2"):
+          i = y - 1
+          if (str[y] === ',') {
+            markerInnerLeft = newMarkerInnerLeft
           }
         }
       }
-
-      // don't forget the indentation too!
-      // ================
-      if (!theresSomethingOnTheLeft && !theresSomethingOnTheRight) {
-        for (let z = realBeginningOfASelector - 1; z >= 0; z--) {
-          if (str[z] !== ' ') {
-            if (str[z] === '\n') {
-              // catch multiple line breaks in front, not only the first-one
-              for (let w = z - 1; w >= 0; w--) {
-                if (str[w] !== '\n') {
-                  realBeginningOfASelector = w + 1
-                  break
-                }
-              }
-            }
-            break
-          }
-        }
+      // deletion of the whole "line":
+      if (canDeleteWholeRow) {
+        // console.log('ABOUT TO PUSH FOR THE WHOLE THING:' + `[${markerOuterLeft}, ${markerOuterRight}]`)
+        pushToFinalIndexesToDelete([markerOuterLeft, markerOuterRight])
       }
-
-      // again extract classes and see if any are in the Wanted list
-      // ================
-      let headExtracted = extract(str.slice(realBeginningOfASelector, realEndingOfASelector))
-      if (intersection(headExtracted, headCssToDelete).length > 0) {
-        //
-        // delete the head selectors:
-        // ================
-        if (
-          (finalIndexesToDelete.length > 0) &&
-          (finalIndexesToDelete[finalIndexesToDelete.length - 1][1] === realBeginningOfASelector)
-        ) {
-          finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = realEndingOfASelector
-        } else {
-          finalIndexesToDelete.push([realBeginningOfASelector, realEndingOfASelector])
-        }
-      } else {
-        // the piece is not deleted, so increase the counter:
-      }
-      i = i + (realEndingOfASelector - realBeginningOfASelector) - (i - realBeginningOfASelector + 1)
+      // console.log('\nmarkerOuter:\n>>>>' + str.slice(markerOuterLeft, markerOuterRight) + '<<<<')
+      i = markerOuterRight - 1
     }
   }
 
@@ -524,7 +579,7 @@ function emailRemoveUnusedCss (str, opts) {
   // removing unused classes & id's from body
   // ================
   for (i = str.indexOf('<body'), len = str.length; i < len; i++) {
-    totalCounter++
+    if (MAINDEBUG) { totalCounter++ }
 
     //
     // 1. identify and remove unused classes from body:
@@ -533,11 +588,13 @@ function emailRemoveUnusedCss (str, opts) {
       let deleteFrom
       classStartedAt = i + 7
       for (let y = i + 7; y < len; y++) {
+        if (MAINDEBUG) { totalCounter++ }
         if (str[y] === '"') {
           classEndedAt = y
           break
         }
       }
+      // console.log('CLASS: >>>>' + str.slice(classStartedAt, classEndedAt) + '<<<<')
 
       let extractedClassArr = pullAll(str.slice(classStartedAt, classEndedAt).split(' '), ['']).map(el => el.trim())
 
@@ -547,25 +604,21 @@ function emailRemoveUnusedCss (str, opts) {
       } else {
         whatsLeft = ''
       }
-
-      // traverse backwards to catch any multiple spaces:
-      // ================
-      for (let y = i - 1; y > 0; y--) {
-        if (str[y] !== ' ') {
-          deleteFrom = y + 1
-          break
+      if ((intersection(extractedClassArr, bodyClassesToDelete).length > 0) || (whatsLeft === '')) {
+        // traverse backwards to catch any multiple spaces:
+        // ================
+        for (let y = i - 1; y > 0; y--) {
+          if (MAINDEBUG) { totalCounter++ }
+          if (str[y] !== ' ') {
+            deleteFrom = y + 1
+            break
+          }
         }
-      }
 
-      // adding identified-to-be-deleted chunks into a to-detele list:
-      // ================
-      if (
-        (finalIndexesToDelete.length > 0) &&
-        (finalIndexesToDelete[finalIndexesToDelete.length - 1][1] === i)
-      ) {
-        finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = classEndedAt + 1
-      } else {
-        finalIndexesToDelete.push([deleteFrom, classEndedAt + 1, whatsLeft])
+        // adding identified-to-be-deleted chunks into a to-detele list:
+        // ================
+
+        pushToFinalIndexesToDelete([deleteFrom, classEndedAt + 1, whatsLeft])
       }
     }
     //
@@ -575,11 +628,13 @@ function emailRemoveUnusedCss (str, opts) {
       let deleteFrom
       idStartedAt = i + 4
       for (let y = i + 4; y < len; y++) {
+        if (MAINDEBUG) { totalCounter++ }
         if (str[y] === '"') {
           idEndedAt = y
           break
         }
       }
+      // console.log('ID: >>>>' + str.slice(idStartedAt, idEndedAt) + '<<<<')
 
       let extractedIdsArr = pullAll(str.slice(idStartedAt, idEndedAt).split(' '), ['']).map(el => el.trim())
 
@@ -593,6 +648,7 @@ function emailRemoveUnusedCss (str, opts) {
       // traverse backwards to catch any multiple spaces:
       // ================
       for (let y = i - 1; y > 0; y--) {
+        if (MAINDEBUG) { totalCounter++ }
         if (str[y] !== ' ') {
           deleteFrom = y + 1
           break
@@ -601,14 +657,9 @@ function emailRemoveUnusedCss (str, opts) {
 
       // adding identified-to-be-deleted chunks into a to-detele list:
       // ================
-      if (
-        (finalIndexesToDelete.length > 0) &&
-        (finalIndexesToDelete[finalIndexesToDelete.length - 1][1] === i)
-      ) {
-        finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = idEndedAt + 1
-      } else {
-        finalIndexesToDelete.push([deleteFrom, idEndedAt + 1, whatsLeft])
-      }
+      // console.log('ABOUT TO PUSH: ' + str.slice(deleteFrom, idEndedAt + 1) + '\n')
+      // console.log('WHATSLEFT: ' + whatsLeft)
+      pushToFinalIndexesToDelete([deleteFrom, idEndedAt + 1, whatsLeft])
 
       // if whole id attribute was removed and it was the last attr. in the tag,
       // and the following character is closing bracket, we remove this remaining
@@ -618,6 +669,7 @@ function emailRemoveUnusedCss (str, opts) {
         let deleteFrom = null
         let deleteUpTo = null
         for (let y = i + 1; y < len; y++) {
+          if (MAINDEBUG) { totalCounter++ }
           if (str[y] !== ' ') {
             if (str[y] === '>') {
               deleteUpTo = y + 1
@@ -629,20 +681,14 @@ function emailRemoveUnusedCss (str, opts) {
           }
         }
         for (let y = i - 1; y > 0; y--) {
+          if (MAINDEBUG) { totalCounter++ }
           if (str[y] !== ' ') {
             deleteFrom = y + 1
             break
           }
         }
         if ((deleteFrom !== null) && (deleteUpTo !== null)) {
-          if (
-            (finalIndexesToDelete.length > 0) &&
-            (finalIndexesToDelete[finalIndexesToDelete.length - 1][1] === deleteFrom)
-          ) {
-            finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = deleteUpTo - 1
-          } else {
-            finalIndexesToDelete.push([deleteFrom, deleteUpTo - 1])
-          }
+          pushToFinalIndexesToDelete([deleteFrom, deleteUpTo - 1])
         }
       }
     }
@@ -652,6 +698,7 @@ function emailRemoveUnusedCss (str, opts) {
   // ================
 
   if (finalIndexesToDelete.length > 0) {
+    if (MAINDEBUG) { console.log('\n\n\n---------\nfinalIndexesToDelete = ' + JSON.stringify(finalIndexesToDelete, null, 4)) }
     let tails = str.slice(finalIndexesToDelete[finalIndexesToDelete.length - 1][1])
     str = finalIndexesToDelete.reduce((acc, val, i, arr) => {
       let beginning = (i === 0) ? 0 : arr[i - 1][1]
@@ -662,7 +709,7 @@ function emailRemoveUnusedCss (str, opts) {
   }
 
   if (MAINDEBUG) { console.log('totalCounter so far: ' + totalCounter) }
-  if (MAINDEBUG) { console.log('==========\nit took: ' + totalCounter / originalLength + ' times more char checks than total input char count.\n==========') }
+  if (MAINDEBUG) { console.log('==========\nwe traversed ' + totalCounter / originalLength + ' times more characters than the total input char count.\n==========') }
 
   // final fixing:
   // ================

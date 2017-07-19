@@ -583,7 +583,7 @@ zzz
 }
 }
 </style></head>
-<body class="_text-color black">
+<body class="_text-color  black">
 zzz
 </body>
 </html>
@@ -1716,11 +1716,12 @@ zzz
   )
 })
 
-test('07.06 - special case - checking spaces #1', t => {
+// div~[^whatever] .del-1 {display: none;}
+test('07.06 - special case - checking commas within curly braces', t => {
   actual = remove(`
 <style type="text/css">
   .used {display: block;}
-  div~[^whatever] .del-1 {display: none;}
+  .deleteme{,,,<<<,>>>,,,,,}
 </style>
 <body class="used">
 zzz
@@ -1738,29 +1739,5 @@ zzz
     actual,
     intended,
     '07.06'
-  )
-})
-
-test('07.07 - special case - checking spaces #2', t => {
-  actual = remove(`
-<style type="text/css">
-  .real, .unused {display: none;}
-</style>
-<body class="real">
-zzz
-</body>`).result
-
-  intended = `<style type="text/css">
-  .real {display: none;}
-</style>
-<body class="real">
-zzz
-</body>
-`
-
-  t.deepEqual(
-    actual,
-    intended,
-    '07.07'
   )
 })
