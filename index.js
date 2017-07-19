@@ -615,9 +615,6 @@ function emailRemoveUnusedCss (str, opts) {
           }
         }
 
-        // adding identified-to-be-deleted chunks into a to-detele list:
-        // ================
-
         pushToFinalIndexesToDelete([deleteFrom, classEndedAt + 1, whatsLeft])
       }
     }
@@ -655,42 +652,7 @@ function emailRemoveUnusedCss (str, opts) {
         }
       }
 
-      // adding identified-to-be-deleted chunks into a to-detele list:
-      // ================
-      // console.log('ABOUT TO PUSH: ' + str.slice(deleteFrom, idEndedAt + 1) + '\n')
-      // console.log('WHATSLEFT: ' + whatsLeft)
       pushToFinalIndexesToDelete([deleteFrom, idEndedAt + 1, whatsLeft])
-
-      // if whole id attribute was removed and it was the last attr. in the tag,
-      // and the following character is closing bracket, we remove this remaining
-      // space character, so that bracket follows whatever was left.
-      // otherwise you'd get cases like <table > instead of <table> after deletion.
-      if (str[i] === ' ') {
-        let deleteFrom = null
-        let deleteUpTo = null
-        for (let y = i + 1; y < len; y++) {
-          if (MAINDEBUG) { totalCounter++ }
-          if (str[y] !== ' ') {
-            if (str[y] === '>') {
-              deleteUpTo = y + 1
-              break
-            } else {
-              deleteUpTo = y
-              break
-            }
-          }
-        }
-        for (let y = i - 1; y > 0; y--) {
-          if (MAINDEBUG) { totalCounter++ }
-          if (str[y] !== ' ') {
-            deleteFrom = y + 1
-            break
-          }
-        }
-        if ((deleteFrom !== null) && (deleteUpTo !== null)) {
-          pushToFinalIndexesToDelete([deleteFrom, deleteUpTo - 1])
-        }
-      }
     }
   }
 
