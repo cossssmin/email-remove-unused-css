@@ -45,10 +45,10 @@ $ npm install --save email-remove-unused-css
 
 This library removes unused CSS from HTML. It is aimed for email HTML, which means there are peculiarities compared to web HTML:
 
-* email code is expected to have **back-end code**: proprietary ESP markup or whatever backend code is used to set up email campaign: Ruby, Java or others. This library has to play well with non-valid HTML. This means, **no parsing can be used** here.
+* email code is expected to have **back-end code**: proprietary ESP markup or whatever backend code is used to set up email campaign: Ruby, Java or others. This library has to play well with non-valid HTML. This means, it can't use **HTML parsing**.
 * this library will cope with **dirty code** well. As long as your CSS stays within `<style>` tags and within `class=`/`id=` attributes, this library **will cope fine**. Missing `<html>`, unclosed `</table>` tags - no problemo! Use other tools to lint your code, but this library will not touch your HTML.
-* Exception to not-touching-the-HTML is areas (and vicinity) directly related to CSS removal features. For example, if you have CSS within body: `class="    unused-class-1    used-class-2 "` it will output `class="used-class-2"`, removing redundant space around. It aims not to touch your HTML, but _where it does_, it will produce squeaky clean HTML (leaving the rest as it is).
-* Full support of `id` attributes is needed with a whitelisting option.
+* Exceptions to _not-touching-the-HTML_ rule are areas (and vicinity) directly related to CSS removal. For example, if you have CSS within body: `class="    unused-class-1    used-class-2 "` `email-remove-unused-css` will output it as `class="used-class-2"`, removing the redundant space around. It just _aims_ not to touch your HTML, but _where it does_ touch it, it will produce squeaky clean HTML (leaving the rest as it is).
+* Full support of `id` attributes (in `<head>`, in `<body>`, mixed with classes, within media queries, whatever) is needed with a whitelisting option. `email-remove-unused-css` does the class and id cleaning equally well.
 * maximum speed is a requirement, and full-rewrite in the v.2 release is by magnitudes faster: it takes milliseconds to what previously took minutes. That's because all the job is done on the input string, **within three traversal loops**. There are no operations on objects or parsing.
 
 ## API - new in v.2

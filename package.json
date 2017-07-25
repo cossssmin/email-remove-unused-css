@@ -38,7 +38,8 @@
     "lodash.isplainobject": "*",
     "lodash.pullall": "*",
     "lodash.uniq": "*",
-    "string-extract-class-names": "^3.3.1"
+    "string-extract-class-names": "^3.3.1",
+    "string-replace-slices-array": "^1.0.1"
   },
   "devDependencies": {
     "ava": "*",

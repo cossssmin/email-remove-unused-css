@@ -9,6 +9,7 @@ const extract = require('string-extract-class-names')
 const isObj = require('lodash.isplainobject')
 const isArr = Array.isArray
 const pullAllWithGlob = require('array-pull-all-with-glob')
+const replaceSlicesArr = require('string-replace-slices-array')
 
 function emailRemoveUnusedCss (str, opts) {
   function characterSuitableForNames (char) {
@@ -675,13 +676,7 @@ function emailRemoveUnusedCss (str, opts) {
 
   if (finalIndexesToDelete.length > 0) {
     if (MAINDEBUG) { console.log('\n\n\n---------\nfinalIndexesToDelete = ' + JSON.stringify(finalIndexesToDelete, null, 4)) }
-    let tails = str.slice(finalIndexesToDelete[finalIndexesToDelete.length - 1][1])
-    str = finalIndexesToDelete.reduce((acc, val, i, arr) => {
-      let beginning = (i === 0) ? 0 : arr[i - 1][1]
-      let ending = arr[i][0]
-      return acc + str.slice(beginning, ending) + (existy(arr[i][2]) ? arr[i][2] : '')
-    }, '')
-    str += tails
+    str = replaceSlicesArr(str, finalIndexesToDelete)
   }
 
   if (MAINDEBUG) { console.log('totalCounter so far: ' + totalCounter) }

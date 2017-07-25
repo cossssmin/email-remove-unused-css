@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.2.0] - 2017-07-25
+### Added
+- npmignore
+- Extracted string replacement using slices array into a separate library, [string-replace-slices-array](https://github.com/codsen/string-replace-slices-array) and then tapped it. This will make it easier to add new features to it and also to maintain it.
+
 ## [2.1.1] - 2017-07-19
 
 ### Changed
@@ -143,3 +148,4 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 [2.0.0]: https://github.com/codsen/email-remove-unused-css/compare/v1.17.0...v2.0.0
 [2.1.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.0.0...v2.1.0
 [2.1.1]: https://github.com/codsen/email-remove-unused-css/compare/v2.1.0...v2.1.1
+[2.2.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.1.1...v2.2.0
