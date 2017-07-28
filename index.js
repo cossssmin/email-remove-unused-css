@@ -10,6 +10,7 @@ const isObj = require('lodash.isplainobject')
 const isArr = Array.isArray
 const pullAllWithGlob = require('array-pull-all-with-glob')
 const replaceSlicesArr = require('string-replace-slices-array')
+const Slices = require('string-slices-array-push')
 
 function emailRemoveUnusedCss (str, opts) {
   function characterSuitableForNames (char) {
@@ -41,75 +42,7 @@ function emailRemoveUnusedCss (str, opts) {
   var regexEmptyStyleTag = /[\n]?\s*<style[^>]*>\s*<\/style\s*>/g
   var regexEmptyMediaQuery = /[\n]?\s*@media[^{]*{\s*}/g
 
-  var finalIndexesToDelete = []
-  function pushToFinalIndexesToDelete ([from, to, whatsLeft]) {
-    var last = null
-    if (finalIndexesToDelete.length > 0) {
-      last = finalIndexesToDelete.length - 1
-    }
-    if (
-      (last !== null) &&
-      (from === finalIndexesToDelete[last][1])
-    ) {
-      finalIndexesToDelete[finalIndexesToDelete.length - 1][1] = to
-      if (whatsLeft !== undefined) {
-        finalIndexesToDelete[last][2] = (existy(finalIndexesToDelete[last][2]) && finalIndexesToDelete[last][2].length > 0) ? finalIndexesToDelete[last][2] + whatsLeft : whatsLeft
-      }
-    } else if (
-      (last !== null) &&
-      (
-        (from <= finalIndexesToDelete[last][1]) ||
-        (from <= finalIndexesToDelete[last][0])
-      )
-    ) {
-      // console.log(`current last elem: [${finalIndexesToDelete[last][0]}, ${finalIndexesToDelete[last][1]}]`)
-      finalIndexesToDelete[last][0] = Math.min(from, finalIndexesToDelete[last][0])
-      finalIndexesToDelete[last][1] = Math.max(to, finalIndexesToDelete[last][1])
-      // console.log(`updated last elem: [${finalIndexesToDelete[last][0]}, ${finalIndexesToDelete[last][1]}]`)
-      if (whatsLeft !== undefined) {
-        if (
-          existy(finalIndexesToDelete[last][2]) &&
-          (finalIndexesToDelete[last][2].length > 0)
-        ) {
-          finalIndexesToDelete[last][2] += whatsLeft
-        } else {
-          finalIndexesToDelete[last][2] = whatsLeft
-        }
-      }
-      // now, newly-owerwritten, last element of indexes array can itself overlap or
-      // have smaller indexes than the element before it.
-      // We need to traverse it backwards recursively and check/fix that.
-      for (let i = last; i > 0; i--) {
-        // console.log(`finalIndexesToDelete[${i}] = ` + JSON.stringify(finalIndexesToDelete[i], null, 4))
-        for (let y = i; y > 0; y--) {
-          if (MAINDEBUG) { totalCounter++ }
-          // console.log(` > finalIndexesToDelete[${y}] = ` + JSON.stringify(finalIndexesToDelete[y], null, 4))
-          if (finalIndexesToDelete[y][0] <= finalIndexesToDelete[y - 1][1]) {
-            finalIndexesToDelete[y - 1][0] = Math.min(finalIndexesToDelete[y - 1][0], finalIndexesToDelete[y][0])
-            finalIndexesToDelete[y - 1][1] = Math.max(finalIndexesToDelete[y - 1][1], finalIndexesToDelete[y][1])
-            if (existy(finalIndexesToDelete[y][2])) {
-              if (
-                existy(finalIndexesToDelete[y - 1][2]) &&
-                (finalIndexesToDelete[y - 1][2].length > 0)
-              ) {
-                finalIndexesToDelete[y - 1][2] += finalIndexesToDelete[y][2]
-              } else {
-                finalIndexesToDelete[y - 1][2] = finalIndexesToDelete[y][2]
-              }
-            }
-            // delete last element, the array finalIndexesToDelete[y]
-            finalIndexesToDelete.pop()
-            // fix the counter
-            i--
-          } else {
-            break
-          }
-        }
-      }
-    } else {
-      finalIndexesToDelete.push(whatsLeft ? [from, to, whatsLeft] : [from, to])
-    }
-  }
+  var finalIndexesToDelete = new Slices()
 
   // insurance
   if (typeof str !== 'string') {
@@ -521,7 +454,7 @@ function emailRemoveUnusedCss (str, opts) {
             // console.log('\n1selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight + 1) + '<<<<')
             if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight + 1)), headCssToDelete).length > 0) {
               // delete this chunk
-              pushToFinalIndexesToDelete([markerInnerLeft, markerInnerRight + 1])
+              finalIndexesToDelete.add(markerInnerLeft, markerInnerRight + 1)
             } else {
               // don't delete, but prevent the deletion of the whole "line"
               canDeleteWholeRow = false
@@ -533,16 +466,9 @@ function emailRemoveUnusedCss (str, opts) {
             // Also, if there is more than one white space character, we're going to add it
             // to deletion list, leaving only a space.
             if (str[y] === '{') {
-              let counter = -1
               for (let z = y - 1; z > 0; z--) {
-                counter++
                 if (str[z].trim() !== '') {
                   markerInnerRight = z + 1
-                  if (counter > 1) {
-                    // console.log('COUNTER=' + counter)
-                    // console.log(`PUSHING TO DELETE: [markerInnerRight, y] = [${markerInnerRight}, ${y}]`)
-                    pushToFinalIndexesToDelete([markerInnerRight, y, ' '])
-                  }
                   break
                 }
               }
@@ -550,7 +476,7 @@ function emailRemoveUnusedCss (str, opts) {
             // console.log('\n2selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight) + '<<<<')
             if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete).length > 0) {
               // delete this chunk
-              pushToFinalIndexesToDelete([markerInnerLeft, markerInnerRight])
+              finalIndexesToDelete.add(markerInnerLeft, markerInnerRight)
             } else {
               // don't delete, but prevent the deletion of the whole "line"
               canDeleteWholeRow = false
@@ -568,7 +494,7 @@ function emailRemoveUnusedCss (str, opts) {
       // deletion of the whole "line":
       if (canDeleteWholeRow) {
         // console.log('ABOUT TO PUSH FOR THE WHOLE THING:' + `[${markerOuterLeft}, ${markerOuterRight}]`)
-        pushToFinalIndexesToDelete([markerOuterLeft, markerOuterRight])
+        finalIndexesToDelete.add(markerOuterLeft, markerOuterRight)
       }
       // console.log('\nmarkerOuter:\n>>>>' + str.slice(markerOuterLeft, markerOuterRight) + '<<<<')
       i = markerOuterRight - 1
@@ -630,7 +556,7 @@ function emailRemoveUnusedCss (str, opts) {
           }
         }
 
-        pushToFinalIndexesToDelete([deleteFrom, classEndedAt + 1, whatsLeft])
+        finalIndexesToDelete.add(deleteFrom, classEndedAt + 1, whatsLeft)
       }
     }
     //
@@ -667,16 +593,16 @@ function emailRemoveUnusedCss (str, opts) {
         }
       }
 
-      pushToFinalIndexesToDelete([deleteFrom, idEndedAt + 1, whatsLeft])
+      finalIndexesToDelete.add(deleteFrom, idEndedAt + 1, whatsLeft)
     }
   }
 
-  // actual deletion:
-  // ================
+  // actual deletion/insertion:
+  // ==========================
 
-  if (finalIndexesToDelete.length > 0) {
+  if (existy(finalIndexesToDelete.current())) {
     if (MAINDEBUG) { console.log('\n\n\n---------\nfinalIndexesToDelete = ' + JSON.stringify(finalIndexesToDelete, null, 4)) }
-    str = replaceSlicesArr(str, finalIndexesToDelete)
+    str = replaceSlicesArr(str, finalIndexesToDelete.current())
   }
 
   if (MAINDEBUG) { console.log('totalCounter so far: ' + totalCounter) }
