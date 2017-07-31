@@ -32,15 +32,15 @@
   },
   "homepage": "https://github.com/codsen/email-remove-unused-css",
   "dependencies": {
-    "array-pull-all-with-glob": "^2.0.3",
+    "array-pull-all-with-glob": "^2.0.4",
     "lodash.clonedeep": "*",
     "lodash.intersection": "*",
     "lodash.isplainobject": "*",
     "lodash.pullall": "*",
     "lodash.uniq": "*",
     "string-extract-class-names": "^3.3.3",
-    "string-replace-slices-array": "^1.0.3",
-    "string-slices-array-push": "^1.0.1"
+    "string-replace-slices-array": "^1.0.5",
+    "string-slices-array-push": "^1.1.0"
   },
   "devDependencies": {
     "ava": "*",
