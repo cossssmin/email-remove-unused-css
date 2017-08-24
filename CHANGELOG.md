@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.4.0] - 2017-08-25
+### Updated
+- All dependencies
+- Improved the algorithm, accepting a single string ignore in the `opts` (and later automatically arrayiffying it).
+### Removed
+- Dependency of `lodash.clodedeep`. I'm using now simply ES6's `Array.from`.
+
 ## [2.3.0] - 2017-07-28
 ### Added
 - Internal function `pushToFinalIndexesToDelete()` now put into a separate library, [string-slices-array-push](https://github.com/codsen/string-slices-array-push). This means more and thorough unit tests are covering it. Actually, it has 100%-line and 100%-branch unit test [coverage](https://coveralls.io/github/codsen/string-slices-array-push).
@@ -154,3 +161,4 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 [2.1.1]: https://github.com/codsen/email-remove-unused-css/compare/v2.1.0...v2.1.1
 [2.2.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.1.1...v2.2.0
 [2.3.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.2.0...v2.3.0
+[2.4.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.3.0...v2.4.0

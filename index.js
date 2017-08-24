@@ -1,7 +1,6 @@
 'use strict'
 
 // const moment = require('moment')
-const clone = require('lodash.clonedeep')
 const pullAll = require('lodash.pullall')
 const uniq = require('lodash.uniq')
 const intersection = require('lodash.intersection')
@@ -17,6 +16,7 @@ function emailRemoveUnusedCss (str, opts) {
     return /[.#\-_A-Za-z0-9]/.test(char)
   }
   function existy (x) { return x != null }
+  function isStr (something) { return typeof something === 'string' }
   var MAINDEBUG = 0
   var i, len
   var styleStartedAt = 0
@@ -61,8 +61,14 @@ function emailRemoveUnusedCss (str, opts) {
     whitelist: []
   }
   opts = Object.assign(defaults, opts)
+  if (isStr(opts.whitelist)) {
+    opts.whitelist = [opts.whitelist]
+  }
   if (!isArr(opts.whitelist)) {
     throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_03] opts.whitelist should be an array, but it was customised to a wrong thing, ' + JSON.stringify(opts.whitelist, null, 4))
+  }
+  if ((opts.whitelist.length > 0) && (!opts.whitelist.every(el => isStr(el)))) {
+    throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_04] opts.whitelist array should contain only string-type elements. Currently we\ve got:\n' + JSON.stringify(opts.whitelist, null, 4))
   }
 
 //
@@ -298,14 +304,11 @@ function emailRemoveUnusedCss (str, opts) {
   // against the body classes/id's.
   // ================
 
-  let headCssToDelete = clone(allClassesAndIdsWithinHead)
-  pullAll(headCssToDelete, bodyClassesArr.concat(bodyIdsArr))
-  headCssToDelete = pullAllWithGlob(uniq(headCssToDelete), opts.whitelist)
+  let headCssToDelete = pullAllWithGlob(pullAll(uniq(Array.from(allClassesAndIdsWithinHead)), bodyClassesArr.concat(bodyIdsArr)), opts.whitelist)
   if (MAINDEBUG) { console.log('\n* OLD headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
 
-  let bodyCssToDelete = pullAllWithGlob(pullAll(bodyClassesArr.concat(bodyIdsArr), preppedAllClassesAndIdsWithinHead), opts.whitelist)
+  let bodyCssToDelete = uniq(pullAllWithGlob(pullAll(bodyClassesArr.concat(bodyIdsArr), preppedAllClassesAndIdsWithinHead), opts.whitelist))
   if (MAINDEBUG) { console.log('* bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4)) }
-  bodyCssToDelete = uniq(bodyCssToDelete)
 
   // now that we know final to-be-deleted selectors list, compare them with `deletedFromHeadArr`
   // and fill any missing CSS in `headCssToDelete`:

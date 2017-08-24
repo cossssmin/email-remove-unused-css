@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "precommit": "npm test && doctoc README.md",
+    "precommit": "npm test",
     "test": "standard && nyc --reporter=html --reporter=text ava"
   },
   "repository": "codsen/email-remove-unused-css",
@@ -32,23 +32,21 @@
   },
   "homepage": "https://github.com/codsen/email-remove-unused-css",
   "dependencies": {
-    "array-pull-all-with-glob": "^2.0.4",
-    "lodash.clonedeep": "*",
+    "array-pull-all-with-glob": "^3.0.2",
     "lodash.intersection": "*",
     "lodash.isplainobject": "*",
     "lodash.pullall": "*",
     "lodash.uniq": "*",
     "string-extract-class-names": "^3.3.3",
-    "string-replace-slices-array": "^1.0.5",
-    "string-slices-array-push": "^1.1.0"
+    "string-replace-slices-array": "^1.1.0",
+    "string-slices-array-push": "^1.2.0"
   },
   "devDependencies": {
     "ava": "*",
     "coveralls": "*",
-    "doctoc": "*",
     "husky": "*",
     "nyc": "*",
-    "standard": "^10.0.2"
+    "standard": "^10.0.3"
   },
   "ava": {
     "verbose": true

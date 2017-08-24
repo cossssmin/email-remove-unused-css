@@ -1236,6 +1236,9 @@ test('05.02 - wrong opts', t => {
   t.throws(function () {
     remove('', true)
   })
+  t.throws(function () {
+    remove('', {whitelist: 1})
+  })
   t.notThrows(function () {
     remove('', {})
   })
@@ -1250,6 +1253,15 @@ test('05.02 - wrong opts', t => {
   })
   t.notThrows(function () {
     remove('zzz', {whitelist: []})
+  })
+  t.notThrows(function () {
+    remove('zzz', {whitelist: ''})
+  })
+  t.notThrows(function () {
+    remove('zzz', {whitelist: 'a'})
+  })
+  t.throws(function () {
+    remove('zzz', {whitelist: [true]})
   })
 })
 
