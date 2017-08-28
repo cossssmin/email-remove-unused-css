@@ -2002,3 +2002,59 @@ test('08.06 - color code hashes interpreted correctly, not as id\'s', t => {
     '08.06 - look for #525252 in head styles, it should not be among results - v2.6.0+'
   )
 })
+
+test('08.07 - one-letter classes (modern notation)', t => {
+  actual = remove(`<head>
+<style type="text/css">
+.h{display:none !important;}
+</style>
+</head>
+<body>
+<span class="h">z</span>
+</body>
+`)
+
+  intended = `<head>
+<style type="text/css">
+.h{display:none !important;}
+</style>
+</head>
+<body>
+<span class="h">z</span>
+</body>
+`
+
+  t.deepEqual(
+    actual.result,
+    intended,
+    '08.07 - class .h should not get removed'
+  )
+})
+
+test('08.08 - one-letter classes (old notation)', t => {
+  actual = remove(`<head>
+<style type="text/css">
+*[class].h{display:none !important;}
+</style>
+</head>
+<body>
+<span class="h">z</span>
+</body>
+`)
+
+  intended = `<head>
+<style type="text/css">
+*[class].h{display:none !important;}
+</style>
+</head>
+<body>
+<span class="h">z</span>
+</body>
+`
+
+  t.deepEqual(
+    actual.result,
+    intended,
+    '08.08 - class .h should not get removed'
+  )
+})

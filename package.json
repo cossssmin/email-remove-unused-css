@@ -37,7 +37,7 @@
     "lodash.isplainobject": "*",
     "lodash.pullall": "*",
     "lodash.uniq": "*",
-    "string-extract-class-names": "^3.3.3",
+    "string-extract-class-names": "^3.4.0",
     "string-replace-slices-array": "^1.1.0",
     "string-slices-array-push": "^1.2.0"
   },
