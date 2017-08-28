@@ -1961,3 +1961,44 @@ test('08.05 - sneaky attributes that end with characters "class"', t => {
     '08.05 - sneaky superclass attribute'
   )
 })
+
+test('08.06 - color code hashes interpreted correctly, not as id\'s', t => {
+  actual = remove(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dummy HTML</title>
+<style type="text/css">
+  .real-class-1:active, #head-only-id1[whatnot], whatever[lang|en]{width:100% !important;}
+  #real-id-1:hover{width:100% !important;}
+  /* Clickable phone numbers */
+  a[href^="tel"], a[href^="sms"] {  text-decoration: none; color: #525252; pointer-events: none; cursor: default;}
+  .mobile_link a[href^="tel"], .mobile_link a[href^="sms"] { text-decoration: default;  color: #0075bc !important; pointer-events: auto;  cursor: default;}
+</style>
+</head>
+<body>
+<table id="     real-id-1    body-only-id-1    " class="     body-only-class-1 " width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr id="      body-only-id-4     ">
+          <td id="     body-only-id-2     body-only-id-3   " class="     real-class-1      body-only-class-2     body-only-class-3 ">
+            <a href="zzz" superclass="26489" target="_blank">Dummy content</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+`)
+
+  intended = ['#head-only-id1', '.mobile_link']
+
+  t.deepEqual(
+    actual.deletedFromHead,
+    intended,
+    '08.06 - look for #525252 in head styles, it should not be among results - v2.6.0+'
+  )
+})

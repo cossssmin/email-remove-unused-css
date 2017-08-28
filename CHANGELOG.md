@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.6.0] - 2017-08-28
+### Fixed
+- 🐛 A bug where color codes in head styles would be misinterpreted as id's and added among "deletedFromHead", while in reality they were not deleted. Sorry about that. That's an embarrassing bug.
+
 ## [2.5.0] - 2017-08-28
 ### Fixed
 - 🐛 A bug where attributes that ended with "class" (like "superclass") or "id" (like "urlid") were misinterpreted as classes or id's. Sorry about that.
-- 🐛 A bug where color hashes in the head were misinterpreted as id's.
+- 🐛 A bug where color hashes in the head were misinterpreted as id's. Sorry about that.
 
 ## [2.4.0] - 2017-08-25
 ### Updated
@@ -168,3 +172,4 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 [2.3.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.2.0...v2.3.0
 [2.4.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.3.0...v2.4.0
 [2.5.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.4.0...v2.5.0
+[2.6.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.5.0...v2.6.0

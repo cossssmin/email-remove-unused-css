@@ -129,7 +129,7 @@ function emailRemoveUnusedCss (str, opts) {
     // pinpoint closing curly braces
     // ================
     if (checkingInsideCurlyBraces && (chr === '}')) {
-      checkingInsideCurlyBraces = false
+      // checkingInsideCurlyBraces = false
       insideCurlyBraces = false
     }
 
