@@ -18,6 +18,7 @@ function emailRemoveUnusedCss (str, opts) {
   function existy (x) { return x != null }
   function isStr (something) { return typeof something === 'string' }
   var MAINDEBUG = 0
+  var MAINDEBUG2 = 0
   var i, len
   var styleStartedAt = 0
   var styleEndedAt = 0
@@ -91,13 +92,17 @@ function emailRemoveUnusedCss (str, opts) {
 
   var totalCounter = 0
   var originalLength = str.length || 1
+  let ignoreTheNextCurlieBecauseItFollowsAtMedia = false
   for (let i = 0, len = str.length; i < len; i++) {
+    if (MAINDEBUG) { console.log(`----------------------------------------- str[${i}] = ${(str[i].trim() !== '') ? str[i] : 'space/LR'}`) }
+
     if (MAINDEBUG) { totalCounter++ }
     let chr = str[i]
 
     // pinpoint any <style... tag, anywhere within the given HTML
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '<style') {
+      checkingInsideCurlyBraces = true
       for (let y = i; y < len; y++) {
         if (MAINDEBUG) { totalCounter++ }
         if (str[y] === '>') {
@@ -110,7 +115,15 @@ function emailRemoveUnusedCss (str, opts) {
     // pinpoint closing style tag, </style>
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '/style') {
+      checkingInsideCurlyBraces = false
       styleEndedAt = i - 1
+    }
+
+    // pinpoint @media
+    // ================
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '@media') {
+      if (MAINDEBUG) { console.log('\n* @media detected') }
+      ignoreTheNextCurlieBecauseItFollowsAtMedia = true
     }
 
     // pinpoint closing curly braces
@@ -120,10 +133,14 @@ function emailRemoveUnusedCss (str, opts) {
       insideCurlyBraces = false
     }
 
-    // pinpoint opening curly braces
+    // pinpoint opening curly braces, but not @media's.
     // ================
-    if (checkingInsideCurlyBraces && (chr === '{')) {
-      insideCurlyBraces = true
+    if (chr === '{') {
+      if (ignoreTheNextCurlieBecauseItFollowsAtMedia) {
+        ignoreTheNextCurlieBecauseItFollowsAtMedia = false
+      } else if (checkingInsideCurlyBraces && !insideCurlyBraces) {
+        insideCurlyBraces = true
+      }
     }
 
     // catch opening dot or hash
@@ -171,7 +188,8 @@ function emailRemoveUnusedCss (str, opts) {
     // ================
     if (
       (bodyStartedAt !== 0) &&
-      (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === 'class="')
+      (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === 'class="') &&
+      ((str[i - 1] === ' ') || (str[i - 1] === '"')) // this is to prevent false positives like attribute "superclass=..."
     ) {
       bodyClassAttributeStartedAt = i + 6
     }
@@ -180,7 +198,8 @@ function emailRemoveUnusedCss (str, opts) {
     // ================
     if (
       (bodyStartedAt !== 0) &&
-      (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}` === 'id="')
+      (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}` === 'id="') &&
+      ((str[i - 1] === ' ') || (str[i - 1] === '"')) // this is to prevent false positives like attribute "urlid=..."
     ) {
       bodyIdAttributeStartedAt = i + 3
     }
@@ -343,16 +362,20 @@ function emailRemoveUnusedCss (str, opts) {
   styleStartedAt = 0
   styleEndedAt = 0
   let canDeleteWholeRow
+  let checkForCurlies = false
+  let withinCurlies = false
+  ignoreTheNextCurlieBecauseItFollowsAtMedia = false
 
   for (i = 0, len = str.length; i < len; i++) {
     if (MAINDEBUG) { totalCounter++ }
 
     let chr = str[i]
-    // console.log(`str[${i}]=` + str[i])
+    if (MAINDEBUG2) { console.log(`str[${i}] = ${(str[i].trim() !== '') ? str[i] : 'space/LR'}`) }
 
     // pinpoint any <style... tag, anywhere within the given HTML
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '<style') {
+      if (MAINDEBUG2) { console.log('\n* style tag begins') }
       for (let y = i; y < len; y++) {
         if (MAINDEBUG) { totalCounter++ }
         if (str[y] === '>') {
@@ -360,13 +383,38 @@ function emailRemoveUnusedCss (str, opts) {
           break
         }
       }
+      checkForCurlies = true
     }
 
     // pinpoint closing style tag, </style>
     // ================
     if (`${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === '/style') {
+      if (MAINDEBUG2) { console.log('\n* style tag ends') }
       styleEndedAt = i
+      checkForCurlies = false
     }
+
+    // pinpoint @media
+    // ================
+    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '@media') {
+      if (MAINDEBUG2) { console.log('\n* @media detected') }
+      ignoreTheNextCurlieBecauseItFollowsAtMedia = true
+    }
+
+    // detect being within curly braces, but not @media's.
+    if (str[i] === '{') {
+      if (ignoreTheNextCurlieBecauseItFollowsAtMedia) {
+        ignoreTheNextCurlieBecauseItFollowsAtMedia = false
+      } else if (checkForCurlies && !withinCurlies) {
+        withinCurlies = true
+      }
+    }
+
+    if (checkForCurlies && withinCurlies && (str[i] === '}')) {
+      withinCurlies = false
+    }
+
+    if (MAINDEBUG2) { console.log('\n *   withinCurlies = ' + withinCurlies) }
 
     let firstSelectorFound = false
     // prep the head
@@ -382,9 +430,10 @@ function emailRemoveUnusedCss (str, opts) {
         // haven't traversed through its closing tag yet:
         ((styleStartedAt > styleEndedAt) && (styleStartedAt < i))
       ) &&
-      ((chr === '.') || (chr === '#')) // &&
+      ((chr === '.') || (chr === '#')) &&
+      !withinCurlies
     ) {
-      // console.log('====================================================')
+      if (MAINDEBUG2) { console.log('====================================================') }
       canDeleteWholeRow = true
       // march backwards to catch:
       // 1) outer left boundary from which we would delete the whole "line"
@@ -395,7 +444,7 @@ function emailRemoveUnusedCss (str, opts) {
       let markerInnerLeft = null
       for (let y = i - 1; y > 0; y--) {
         if (MAINDEBUG) { totalCounter++ }
-        // console.log(`<< str[${y}]=` + str[y])
+        if (MAINDEBUG2) { console.log(`<< str[${y}]=` + str[y]) }
         // part 1):
         if ((str[y] === '>') || (str[y] === '{') || (str[y] === '}')) {
           markerOuterLeft = y + 1
@@ -414,9 +463,9 @@ function emailRemoveUnusedCss (str, opts) {
           markerInnerLeft = null
         }
       }
-      // console.log('\n\n\nmarkerOuterLeft:\n>>>>' + str.slice(markerOuterLeft, markerOuterLeft + 15) + '<<<<')
-      // console.log('\n')
-      // console.log('markerInnerLeft:\n>>>>' + str.slice(markerInnerLeft, markerInnerLeft + 15) + '<<<<\n\n\n')
+      if (MAINDEBUG2) { console.log('\n\n\nmarkerOuterLeft:\n>>>>' + str.slice(markerOuterLeft, markerOuterLeft + 15) + '<<<<') }
+      if (MAINDEBUG2) { console.log('\n') }
+      if (MAINDEBUG2) { console.log('markerInnerLeft:\n>>>>' + str.slice(markerInnerLeft, markerInnerLeft + 15) + '<<<<\n\n\n') }
       // march forward to catch:
       // 3) outer right boundary, up to which we would delete the whole "line".
       // Practically, it's closing curly brace.
@@ -454,7 +503,7 @@ function emailRemoveUnusedCss (str, opts) {
                 break
               }
             }
-            // console.log('\n1selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight + 1) + '<<<<')
+            if (MAINDEBUG2) { console.log('\n1selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight + 1) + '<<<<') }
             if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight + 1)), headCssToDelete).length > 0) {
               // delete this chunk
               finalIndexesToDelete.add(markerInnerLeft, markerInnerRight + 1)
@@ -476,12 +525,20 @@ function emailRemoveUnusedCss (str, opts) {
                 }
               }
             }
-            // console.log('\n2selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight) + '<<<<')
+            if (MAINDEBUG2) { console.log('\n2selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight) + '<<<<') }
+
+            if (MAINDEBUG2) { console.log('\n\n\n\n\n* str.slice(markerInnerLeft, markerInnerRight) = ' + JSON.stringify(str.slice(markerInnerLeft, markerInnerRight), null, 4)) }
+            if (MAINDEBUG2) { console.log('* extract(str.slice(markerInnerLeft, markerInnerRight)) = ' + JSON.stringify(extract(str.slice(markerInnerLeft, markerInnerRight)), null, 4)) }
+            if (MAINDEBUG2) { console.log('* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
+            if (MAINDEBUG2) { console.log('* intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete) = ' + JSON.stringify(intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete), null, 4)) }
+
             if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete).length > 0) {
               // delete this chunk
+              if (MAINDEBUG2) { console.log('\n\n\n\nOUTCOME #1\nadding for deletion 488') }
               finalIndexesToDelete.add(markerInnerLeft, markerInnerRight)
             } else {
               // don't delete, but prevent the deletion of the whole "line"
+              if (MAINDEBUG2) { console.log('\n\n\n\nOUTCOME #2 can\'t delete whole row') }
               canDeleteWholeRow = false
             }
             newMarkerInnerLeft = markerInnerRight
@@ -496,7 +553,7 @@ function emailRemoveUnusedCss (str, opts) {
       }
       // deletion of the whole "line":
       if (canDeleteWholeRow) {
-        // console.log('ABOUT TO PUSH FOR THE WHOLE THING:' + `[${markerOuterLeft}, ${markerOuterRight}]`)
+        if (MAINDEBUG2) { console.log('row 535: ABOUT TO PUSH FOR THE WHOLE THING:' + `[${markerOuterLeft}, ${markerOuterRight}]`) }
         finalIndexesToDelete.add(markerOuterLeft, markerOuterRight)
       }
       // console.log('\nmarkerOuter:\n>>>>' + str.slice(markerOuterLeft, markerOuterRight) + '<<<<')
@@ -528,7 +585,10 @@ function emailRemoveUnusedCss (str, opts) {
     //
     // 1. identify and remove unused classes from body:
     // ================
-    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === 'class="') {
+    if (
+      (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}${str[i + 6]}` === 'class="') &&
+      ((str[i - 1] === ' ') || (str[i - 1] === '"')) // to prevent false positives where attribute ends with "class", like "superclass"
+    ) {
       let deleteFrom
       classStartedAt = i + 7
       for (let y = i + 7; y < len; y++) {
@@ -558,14 +618,16 @@ function emailRemoveUnusedCss (str, opts) {
             break
           }
         }
-
         finalIndexesToDelete.add(deleteFrom, classEndedAt + 1, whatsLeft)
       }
     }
     //
     // 2. identify and remove unused id's from body:
     // ================
-    if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}` === 'id="') {
+    if (
+      (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}` === 'id="') &&
+      ((str[i - 1] === ' ') || (str[i - 1] === '"')) // to prevent false positives where attribute ends with "id", like "urlid"
+    ) {
       let deleteFrom
       idStartedAt = i + 4
       for (let y = i + 4; y < len; y++) {
@@ -595,7 +657,6 @@ function emailRemoveUnusedCss (str, opts) {
           break
         }
       }
-
       finalIndexesToDelete.add(deleteFrom, idEndedAt + 1, whatsLeft)
     }
   }

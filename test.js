@@ -1753,3 +1753,211 @@ zzz
     '07.06'
   )
 })
+
+// ==============================
+// 8. Discovered bugs, 2.5.0 release
+// ==============================
+
+test('08.01 - color code hashes within head styles with no selectors', t => {
+  actual = remove(`<head>
+<style>
+a[href^="tel"], a[href^="sms"] {  text-decoration: none; color: #525252; pointer-events: none; cursor: default;}
+</style>
+</head>
+<body>
+  some code
+</body>
+`)
+
+  intended = `<head>
+<style>
+a[href^="tel"], a[href^="sms"] {  text-decoration: none; color: #525252; pointer-events: none; cursor: default;}
+</style>
+</head>
+<body>
+  some code
+</body>
+`
+
+  t.deepEqual(
+    actual.result,
+    intended,
+    '08.01 - there are no classes or id\'s in the query selector, checking false positives'
+  )
+})
+
+test('08.02 - selectors in head styles without classes or ids', t => {
+  actual = remove(`<head>
+<style>
+a {color: #525252;}
+</style>
+</head>
+<body>
+  some code
+</body>
+`)
+
+  intended = `<head>
+<style>
+a {color: #525252;}
+</style>
+</head>
+<body>
+  some code
+</body>
+`
+
+  t.deepEqual(
+    actual.result,
+    intended,
+    '08.02 - there are no classes or id\'s in the query selector, checking false positives'
+  )
+})
+
+test('08.03 - sneaky attributes that end with characters "id"', t => {
+  actual = remove(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dummy HTML</title>
+<style type="text/css">
+  .real-class-1:active, #head-only-id1[whatnot], whatever[lang|en]{width:100% !important;}
+  #real-id-1:hover{width:100% !important;}
+</style>
+</head>
+<body>
+<table id="     real-id-1    body-only-id-1    " class="     body-only-class-1 " width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr id="      body-only-id-4     ">
+          <td id="     body-only-id-2     body-only-id-3   " class="     real-class-1      body-only-class-2     body-only-class-3 ">
+            <a href="xxx" urlid="26489" target="_blank">Dummy content</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+`)
+
+  intended = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dummy HTML</title>
+<style type="text/css">
+  .real-class-1:active, whatever[lang|en]{width:100% !important;}
+  #real-id-1:hover{width:100% !important;}
+</style>
+</head>
+<body>
+<table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="real-class-1">
+            <a href="xxx" urlid="26489" target="_blank">Dummy content</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+`
+
+  t.deepEqual(
+    actual.result,
+    intended,
+    '08.03 - sneaky urlid attribute'
+  )
+})
+
+test('08.04 - mini version of 08.05, sneaky attributes ending with "class"', t => {
+  actual = remove(`<body>
+<a href="xxx" superclass="26489" >Links</a>
+</body>
+</html>
+`)
+
+  intended = `<body>
+<a href="xxx" superclass="26489" >Links</a>
+</body>
+</html>
+`
+
+  t.deepEqual(
+    actual.result,
+    intended,
+    '08.04 - sneaky superclass attribute'
+  )
+})
+
+test('08.05 - sneaky attributes that end with characters "class"', t => {
+  actual = remove(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dummy HTML</title>
+<style type="text/css">
+  .real-class-1:active, #head-only-id1[whatnot], whatever[lang|en]{width:100% !important;}
+  #real-id-1:hover{width:100% !important;}
+</style>
+</head>
+<body>
+<table id="     real-id-1    body-only-id-1    " class="     body-only-class-1 " width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr id="      body-only-id-4     ">
+          <td id="     body-only-id-2     body-only-id-3   " class="     real-class-1      body-only-class-2     body-only-class-3 ">
+            <a href="xxx" superclass="26489" target="_blank">Dummy content</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+`)
+
+  intended = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dummy HTML</title>
+<style type="text/css">
+  .real-class-1:active, whatever[lang|en]{width:100% !important;}
+  #real-id-1:hover{width:100% !important;}
+</style>
+</head>
+<body>
+<table id="real-id-1" width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="real-class-1">
+            <a href="xxx" superclass="26489" target="_blank">Dummy content</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+`
+
+  t.deepEqual(
+    actual.result,
+    intended,
+    '08.05 - sneaky superclass attribute'
+  )
+})
