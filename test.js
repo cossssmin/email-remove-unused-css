@@ -2058,3 +2058,191 @@ test('08.08 - one-letter classes (old notation)', t => {
     '08.08 - class .h should not get removed'
   )
 })
+
+test('08.09 - one-letter classes (old notation)', t => {
+  actual = remove(`<html>
+<head>
+  <style>
+    .used-1 .aaaaa.aaaaaa {
+      display: block;
+    }
+    #unused-2 {
+      height: auto;
+    }
+  </style>
+</head>
+<body id="unused-3">
+  <table class="unused-4 used-1">
+    <tr>
+      <td class="unused-5 unused-6">
+        text
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`)
+
+  intended = {
+    result: `<html>
+<head>
+</head>
+<body>
+  <table>
+    <tr>
+      <td>
+        text
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`,
+    allInHead: ['.used-1', '.aaaaa', '.aaaaaa', '#unused-2'],
+    allInBody: ['#unused-3', '.unused-4', '.used-1', '.unused-5', '.unused-6'],
+    deletedFromHead: ['.used-1', '.aaaaa', '.aaaaaa', '#unused-2'],
+    deletedFromBody: ['.used-1', '#unused-3', '.unused-4', '.unused-5', '.unused-6']
+  }
+
+  t.deepEqual(
+    actual.allInHead.sort(),
+    intended.allInHead.sort(),
+    '08.09.01 - allInHead'
+  )
+  t.deepEqual(
+    actual.allInBody.sort(),
+    intended.allInBody.sort(),
+    '08.09.02 - allInBody'
+  )
+  t.deepEqual(
+    actual.deletedFromHead.sort(),
+    intended.deletedFromHead.sort(),
+    '08.09.03 - deletedFromHead'
+  )
+  t.deepEqual(
+    actual.deletedFromBody.sort(),
+    intended.deletedFromBody.sort(),
+    '08.09.04 - deletedFromBody'
+  )
+  t.deepEqual(
+    actual.result,
+    intended.result,
+    '08.09.05 - result'
+  )
+})
+
+test('08.10 - checking whole results object, all its keys #1', t => {
+  actual = remove(`<html>
+<head>
+  <style>
+    .used-1 .unused-2.unused-3 {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <span class="used-1 unused-4"></span>
+</body>
+</html>`)
+
+  intended = {
+    result: `<html>
+<head>
+</head>
+<body>
+  <span></span>
+</body>
+</html>
+`,
+    allInHead: ['.used-1', '.unused-2', '.unused-3'],
+    allInBody: ['.used-1', '.unused-4'],
+    deletedFromHead: ['.used-1', '.unused-2', '.unused-3'],
+    deletedFromBody: ['.used-1', '.unused-4']
+  }
+
+  t.deepEqual(
+    actual.allInHead.sort(),
+    intended.allInHead.sort(),
+    '08.10.01 - allInHead'
+  )
+  t.deepEqual(
+    actual.allInBody.sort(),
+    intended.allInBody.sort(),
+    '08.10.02 - allInBody'
+  )
+  t.deepEqual(
+    actual.deletedFromHead.sort(),
+    intended.deletedFromHead.sort(),
+    '08.10.03 - deletedFromHead'
+  )
+  t.deepEqual(
+    actual.deletedFromBody.sort(),
+    intended.deletedFromBody.sort(),
+    '08.10.04 - deletedFromBody'
+  )
+  t.deepEqual(
+    actual.result,
+    intended.result,
+    '08.10.05 - result'
+  )
+})
+
+test('08.11 - checking whole results object, all its keys #2', t => {
+  actual = remove(`<html>
+<head>
+  <style>
+    .used-1, .unused-2.unused-3 {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <span class="used-1 unused-4"></span>
+</body>
+</html>`)
+
+  intended = {
+    result: `<html>
+<head>
+  <style>
+    .used-1 {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <span class="used-1"></span>
+</body>
+</html>
+`,
+    allInHead: ['.used-1', '.unused-2', '.unused-3'],
+    allInBody: ['.used-1', '.unused-4'],
+    deletedFromHead: ['.unused-2', '.unused-3'],
+    deletedFromBody: ['.unused-4']
+  }
+
+  t.deepEqual(
+    actual.allInHead.sort(),
+    intended.allInHead.sort(),
+    '08.11.01 - allInHead'
+  )
+  t.deepEqual(
+    actual.allInBody.sort(),
+    intended.allInBody.sort(),
+    '08.11.02 - allInBody'
+  )
+  t.deepEqual(
+    actual.deletedFromHead.sort(),
+    intended.deletedFromHead.sort(),
+    '08.11.03 - deletedFromHead'
+  )
+  t.deepEqual(
+    actual.deletedFromBody.sort(),
+    intended.deletedFromBody.sort(),
+    '08.11.04 - deletedFromBody'
+  )
+  t.deepEqual(
+    actual.result,
+    intended.result,
+    '08.11.05 - result'
+  )
+})

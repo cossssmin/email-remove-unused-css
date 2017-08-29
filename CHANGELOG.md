@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.7.0] - 2017-08-29
+### Improved
+- 🔧 The algorithm of identifying the legit classes which got completely removed from head as a collateral and therefore become not present in head. Such classes must be removed from body too. There were inconsistencies in the algorithm previously which are not all fixed.
+### Fixed
+- 🐛 Inconsistencies in reporting of what was removed. Some classes/id's might have not been reported as removed, yet result was correct.
+
 ## [2.6.0] - 2017-08-28
 ### Fixed
 - 🐛 A bug where color codes in head styles would be misinterpreted as id's and added among "deletedFromHead", while in reality they were not deleted. Sorry about that. That's an embarrassing bug.
@@ -173,3 +179,4 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 [2.4.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.3.0...v2.4.0
 [2.5.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.4.0...v2.5.0
 [2.6.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.5.0...v2.6.0
+[2.7.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.6.0...v2.7.0

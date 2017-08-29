@@ -271,6 +271,28 @@ function emailRemoveUnusedCss (str, opts) {
   if (MAINDEBUG) { console.log('allClassesAndIdsWithinBody = ' + JSON.stringify(allClassesAndIdsWithinBody, null, 4)) }
   if (MAINDEBUG) { console.log('\nopts.whitelist = ' + JSON.stringify(opts.whitelist, null, 4)) }
 
+  // extract all classes or id's from `headSelectorsArr` and get count of each.
+  // That's so we can later exclude sandwitched classes. Each time "collateral"
+  // legit, but sandwitched with false-one class gets deleted, we keep count, and
+  // later compare totals with these below.
+  // If it turns out that a class was in both head and body, but it was sandwitched
+  // with unused classes and removed as collateral, we need to remove it from body too.
+
+  var headSelectorsCount = {}
+  headSelectorsArr.forEach(function (el, i) {
+    extract(el).forEach(function (selector) {
+      if (headSelectorsCount.hasOwnProperty(selector)) {
+        headSelectorsCount[selector]++
+      } else {
+        headSelectorsCount[selector] = 1
+      }
+    })
+  })
+  if (MAINDEBUG) { console.log('\n* headSelectorsCount = ' + JSON.stringify(headSelectorsCount, null, 4)) }
+  // create a working copy of `headSelectorsCount` which we'll mutate, subtracting
+  // each deleted class/id:
+  var headSelectorsCountClone = Object.assign({}, headSelectorsCount)
+
   //
   //               A F T E R   T R A V E R S A L
   //
@@ -316,6 +338,7 @@ function emailRemoveUnusedCss (str, opts) {
   } else {
     preppedAllClassesAndIdsWithinHead = []
   }
+  if (MAINDEBUG) { console.log('\n* preppedAllClassesAndIdsWithinHead = ' + JSON.stringify(preppedAllClassesAndIdsWithinHead, null, 4)) }
 
   // cycle #2 - now treat remaining lumps as definite sources of
   // "what classes or id's are present in the head"
@@ -370,7 +393,7 @@ function emailRemoveUnusedCss (str, opts) {
     if (MAINDEBUG) { totalCounter++ }
 
     let chr = str[i]
-    if (MAINDEBUG2) { console.log(`str[${i}] = ${(str[i].trim() !== '') ? str[i] : 'space/LR'}`) }
+    if (MAINDEBUG2) { console.log(`---2---          str[${i}] = ${(str[i].trim() !== '') ? str[i] : 'space/LR'}`) }
 
     // pinpoint any <style... tag, anywhere within the given HTML
     // ================
@@ -463,9 +486,10 @@ function emailRemoveUnusedCss (str, opts) {
           markerInnerLeft = null
         }
       }
-      if (MAINDEBUG2) { console.log('\n\n\nmarkerOuterLeft:\n>>>>' + str.slice(markerOuterLeft, markerOuterLeft + 15) + '<<<<') }
-      if (MAINDEBUG2) { console.log('\n') }
-      if (MAINDEBUG2) { console.log('markerInnerLeft:\n>>>>' + str.slice(markerInnerLeft, markerInnerLeft + 15) + '<<<<\n\n\n') }
+      // if (MAINDEBUG2) { console.log('\n\n\nmarkerOuterLeft:\n>>>>' + str.slice(markerOuterLeft, markerOuterLeft + 15) + '<<<<') }
+      // if (MAINDEBUG2) { console.log('\n') }
+      // if (MAINDEBUG2) { console.log('markerInnerLeft:\n>>>>' + str.slice(markerInnerLeft, markerInnerLeft + 15) + '<<<<\n\n\n') }
+
       // march forward to catch:
       // 3) outer right boundary, up to which we would delete the whole "line".
       // Practically, it's closing curly brace.
@@ -505,7 +529,13 @@ function emailRemoveUnusedCss (str, opts) {
             }
             if (MAINDEBUG2) { console.log('\n1selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight + 1) + '<<<<') }
             if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight + 1)), headCssToDelete).length > 0) {
-              // delete this chunk
+              // extract each class and subtract counts from `headSelectorsCountClone`
+              extract(str.slice(markerInnerLeft, markerInnerRight + 1)).forEach(function (selector) {
+                if (headSelectorsCountClone.hasOwnProperty(selector)) {
+                  headSelectorsCountClone[selector]--
+                }
+              })
+              // submit this chunk for deletion
               finalIndexesToDelete.add(markerInnerLeft, markerInnerRight + 1)
             } else {
               // don't delete, but prevent the deletion of the whole "line"
@@ -526,14 +556,19 @@ function emailRemoveUnusedCss (str, opts) {
               }
             }
             if (MAINDEBUG2) { console.log('\n2selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight) + '<<<<') }
-
             if (MAINDEBUG2) { console.log('\n\n\n\n\n* str.slice(markerInnerLeft, markerInnerRight) = ' + JSON.stringify(str.slice(markerInnerLeft, markerInnerRight), null, 4)) }
             if (MAINDEBUG2) { console.log('* extract(str.slice(markerInnerLeft, markerInnerRight)) = ' + JSON.stringify(extract(str.slice(markerInnerLeft, markerInnerRight)), null, 4)) }
             if (MAINDEBUG2) { console.log('* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
             if (MAINDEBUG2) { console.log('* intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete) = ' + JSON.stringify(intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete), null, 4)) }
 
             if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete).length > 0) {
-              // delete this chunk
+              // subtract the counters for each class/id:
+              extract(str.slice(markerInnerLeft, markerInnerRight)).forEach(function (selector) {
+                if (headSelectorsCountClone.hasOwnProperty(selector)) {
+                  headSelectorsCountClone[selector]--
+                }
+              })
+              // submit this chunk for deletion later
               if (MAINDEBUG2) { console.log('\n\n\n\nOUTCOME #1\nadding for deletion 488') }
               finalIndexesToDelete.add(markerInnerLeft, markerInnerRight)
             } else {
@@ -560,6 +595,22 @@ function emailRemoveUnusedCss (str, opts) {
       i = markerOuterRight - 1
     }
   }
+
+  var allClassesAndIdsThatWereCompletelyDeletedFromHead = Object.keys(headSelectorsCountClone).filter(singleSelector => (headSelectorsCountClone[singleSelector] === 0))
+
+  // at this point, if any classes in `headSelectorsCountClone` have zero counters
+  // that means those have all been deleted from head.
+  bodyClassesToDelete = uniq(bodyClassesToDelete.concat(
+    intersection(pullAllWithGlob(allClassesAndIdsWithinBody, opts.whitelist), allClassesAndIdsThatWereCompletelyDeletedFromHead)
+      .filter(val => (val[0] === '.')) // filter out all classes
+      .map(val => val.slice(1)) // remove dots from them
+  ))
+  // update `bodyCssToDelete` too, it's used in reporting
+  bodyCssToDelete = uniq(bodyCssToDelete.concat(
+    bodyClassesToDelete.map(val => '.' + val)
+  )).sort()
+
+  if (MAINDEBUG) { console.log('\n\n* BEFORE STEP #3 - bodyClassesToDelete = ' + JSON.stringify(bodyClassesToDelete, null, 4)) }
 
 //                       .----------------.
 //                      | .--------------. |
@@ -686,7 +737,11 @@ function emailRemoveUnusedCss (str, opts) {
     result: str,
     allInHead: allClassesAndIdsWithinHead.sort(),
     allInBody: allClassesAndIdsWithinBody.sort(),
-    deletedFromHead: uniq(deletedFromHeadArr.concat(headCssToDelete)).sort(),
+    // deletedFromHead: uniq(deletedFromHeadArr.concat(headCssToDelete)).sort(),
+    deletedFromHead: uniq(
+      Object.keys(headSelectorsCountClone)
+        .filter(singleSelector => (headSelectorsCountClone[singleSelector] === 0))
+    ).sort(),
     deletedFromBody: bodyCssToDelete.sort()
   }
 }
