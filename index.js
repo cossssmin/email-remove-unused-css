@@ -528,7 +528,11 @@ function emailRemoveUnusedCss (str, opts) {
               }
             }
             if (MAINDEBUG2) { console.log('\n1selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight + 1) + '<<<<') }
-            if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight + 1)), headCssToDelete).length > 0) {
+            if (
+              (intersection(extract(str.slice(markerInnerLeft, markerInnerRight + 1)), headCssToDelete).length > 0) &&
+              (markerInnerLeft !== undefined) &&
+              ((markerInnerRight + 1) !== undefined)
+            ) {
               // extract each class and subtract counts from `headSelectorsCountClone`
               extract(str.slice(markerInnerLeft, markerInnerRight + 1)).forEach(function (selector) {
                 if (headSelectorsCountClone.hasOwnProperty(selector)) {
@@ -561,7 +565,11 @@ function emailRemoveUnusedCss (str, opts) {
             if (MAINDEBUG2) { console.log('* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
             if (MAINDEBUG2) { console.log('* intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete) = ' + JSON.stringify(intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete), null, 4)) }
 
-            if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete).length > 0) {
+            if (
+              (intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete).length > 0) &&
+              (markerInnerLeft !== undefined) &&
+              (markerInnerRight !== undefined)
+            ) {
               // subtract the counters for each class/id:
               extract(str.slice(markerInnerLeft, markerInnerRight)).forEach(function (selector) {
                 if (headSelectorsCountClone.hasOwnProperty(selector)) {
@@ -587,7 +595,7 @@ function emailRemoveUnusedCss (str, opts) {
         }
       }
       // deletion of the whole "line":
-      if (canDeleteWholeRow) {
+      if (canDeleteWholeRow && (markerOuterLeft !== undefined) && (markerOuterRight !== undefined)) {
         if (MAINDEBUG2) { console.log('row 535: ABOUT TO PUSH FOR THE WHOLE THING:' + `[${markerOuterLeft}, ${markerOuterRight}]`) }
         finalIndexesToDelete.add(markerOuterLeft, markerOuterRight)
       }
@@ -669,7 +677,9 @@ function emailRemoveUnusedCss (str, opts) {
             break
           }
         }
-        finalIndexesToDelete.add(deleteFrom, classEndedAt + 1, whatsLeft)
+        if ((deleteFrom !== undefined) && ((classEndedAt + 1) !== undefined)) {
+          finalIndexesToDelete.add(deleteFrom, classEndedAt + 1, whatsLeft)
+        }
       }
     }
     //
