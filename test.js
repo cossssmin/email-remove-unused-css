@@ -2059,7 +2059,7 @@ test('08.08 - one-letter classes (old notation)', t => {
   )
 })
 
-test('08.09 - one-letter classes (old notation)', t => {
+test('08.09 - one-letter classes - comprehensive comparison', t => {
   actual = remove(`<html>
 <head>
   <style>

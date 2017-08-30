@@ -1,6 +1,5 @@
 'use strict'
 
-// const moment = require('moment')
 const pullAll = require('lodash.pullall')
 const uniq = require('lodash.uniq')
 const intersection = require('lodash.intersection')
