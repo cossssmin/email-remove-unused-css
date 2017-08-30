@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.8.0] - 2017-08-30
+### Added
+- ✨ Transpiled ES5 version, see `/es5/` folder. I was having troubles in `create-react-app` application consuming `email-remove-unused-css`, it refused to minify due to being ES6 code. Hopefully this will help. The plan is to consume the transpiled file directly, like: `import unused from 'email-remove-unused-css/es5'`.
+
 ## [2.7.0] - 2017-08-29
 ### Improved
 - 🔧 The algorithm of identifying the legit classes which got completely removed from head as a collateral and therefore become not present in head. Such classes must be removed from body too. There were inconsistencies in the algorithm previously which are not all fixed.
@@ -180,3 +184,4 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 [2.5.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.4.0...v2.5.0
 [2.6.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.5.0...v2.6.0
 [2.7.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.6.0...v2.7.0
+[2.8.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.7.0...v2.8.0
