@@ -7,8 +7,8 @@ const extract = require('string-extract-class-names')
 const isObj = require('lodash.isplainobject')
 const isArr = Array.isArray
 const pullAllWithGlob = require('array-pull-all-with-glob')
-const replaceSlicesArr = require('string-replace-slices-array')
-const Slices = require('string-slices-array-push')
+const replaceSlicesArr = require('string-replace-slices-array/es5')
+const Slices = require('string-slices-array-push/es5')
 
 function emailRemoveUnusedCss (str, opts) {
   function characterSuitableForNames (char) {
