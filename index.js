@@ -6,7 +6,7 @@ const intersection = require('lodash.intersection')
 const extract = require('string-extract-class-names')
 const isObj = require('lodash.isplainobject')
 const isArr = Array.isArray
-const pullAllWithGlob = require('array-pull-all-with-glob')
+const pullAllWithGlob = require('array-pull-all-with-glob/es5')
 const replaceSlicesArr = require('string-replace-slices-array/es5')
 const Slices = require('string-slices-array-push/es5')
 

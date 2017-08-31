@@ -6,7 +6,7 @@
 
 [![Link to npm page][npm-img]][npm-url]
 [![Build Status][travis-img]][travis-url]
-[![bitHound Overall Score][bithound-img]][bithound-url]
+[![bitHound Overall Score][overall-img]][overall-url]
 [![bitHound Dependencies][deps-img]][deps-url]
 [![bitHound Dev Dependencies][dev-img]][dev-url]
 [![Coverage Status][cov-img]][cov-url]
@@ -189,8 +189,8 @@ SOFTWARE.
 [cov-img]: https://coveralls.io/repos/github/codsen/email-remove-unused-css/badge.svg?branch=master
 [cov-url]: https://coveralls.io/github/codsen/email-remove-unused-css?branch=master
 
-[bithound-img]: https://www.bithound.io/github/codsen/email-remove-unused-css/badges/score.svg
-[bithound-url]: https://www.bithound.io/github/codsen/email-remove-unused-css
+[overall-img]: https://www.bithound.io/github/codsen/email-remove-unused-css/badges/score.svg
+[overall-url]: https://www.bithound.io/github/codsen/email-remove-unused-css
 
 [deps-img]: https://www.bithound.io/github/codsen/email-remove-unused-css/badges/dependencies.svg
 [deps-url]: https://www.bithound.io/github/codsen/email-remove-unused-css/master/dependencies/npm

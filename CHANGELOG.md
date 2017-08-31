@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [2.7.0] - 2017-08-29
 ### Improved
-- 🔧 The algorithm of identifying the legit classes which got completely removed from head as a collateral and therefore become not present in head. Such classes must be removed from body too. There were inconsistencies in the algorithm previously which are not all fixed.
+- 🔧 The algorithm of identifying the legit classes which got completely removed from head as a collateral and therefore become not present in head. Such classes must be removed from body too. There were inconsistencies in the algorithm previously which are now all fixed.
 ### Fixed
 - 🐛 Inconsistencies in reporting of what was removed. Some classes/id's might have not been reported as removed, yet result was correct.
 
