@@ -10,7 +10,7 @@ var intersection = require('lodash.intersection');
 var extract = require('string-extract-class-names');
 var isObj = require('lodash.isplainobject');
 var isArr = Array.isArray;
-var pullAllWithGlob = require('array-pull-all-with-glob');
+var pullAllWithGlob = require('array-pull-all-with-glob/es5');
 var replaceSlicesArr = require('string-replace-slices-array/es5');
 var Slices = require('string-slices-array-push/es5');
 
