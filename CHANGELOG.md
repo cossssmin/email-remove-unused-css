@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.9.0] - 2017-09-19
+### Changed
+- 🔧 Serving transpiled code by default, there's no `/es5/` folder, comes straight from root.
+- 🔧 Switching to ESLint and dropping JS Standard. I discovered JS Standard is poorly maintained (its ESLint dependency is half-year-outdated) and also it is flagged as insecure by BitHound because of `shell.js` dependency two levels deep, coming from ESLint. The ESLint itself, the up-to-date version, is secure. Also I like that `airbnb-base` ESLint preset is well-maintained and has way more active rules, especially ES6-related. I just overrode the semicolons setting.
+
 ## [2.8.0] - 2017-08-30
 ### Added
 - ✨ Transpiled ES5 version, see `/es5/` folder. I was having troubles in `create-react-app` application consuming `email-remove-unused-css`, it refused to minify due to being ES6 code. Hopefully this will help. The plan is to consume the transpiled file directly, like: `import unused from 'email-remove-unused-css/es5'`.
@@ -185,3 +190,4 @@ As such, both classes should be deleted, even though `.existing-in-body` is used
 [2.6.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.5.0...v2.6.0
 [2.7.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.6.0...v2.7.0
 [2.8.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.7.0...v2.8.0
+[2.9.0]: https://github.com/codsen/email-remove-unused-css/compare/v2.8.0...v2.9.0

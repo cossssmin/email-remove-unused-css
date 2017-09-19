@@ -4,15 +4,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
+/* eslint no-param-reassign: 0, no-console: 0 */
+
 var pullAll = require('lodash.pullall');
 var uniq = require('lodash.uniq');
 var intersection = require('lodash.intersection');
 var extract = require('string-extract-class-names');
 var isObj = require('lodash.isplainobject');
+var pullAllWithGlob = require('array-pull-all-with-glob');
+var replaceSlicesArr = require('string-replace-slices-array');
+var Slices = require('string-slices-array-push');
+
 var isArr = Array.isArray;
-var pullAllWithGlob = require('array-pull-all-with-glob/es5');
-var replaceSlicesArr = require('string-replace-slices-array/es5');
-var Slices = require('string-slices-array-push/es5');
 
 function emailRemoveUnusedCss(str, opts) {
   function characterSuitableForNames(char) {
@@ -27,7 +30,8 @@ function emailRemoveUnusedCss(str, opts) {
   }
   var MAINDEBUG = 0;
   var MAINDEBUG2 = 0;
-  var i, len;
+  var i = void 0;
+  var len = void 0;
   var styleStartedAt = 0;
   var styleEndedAt = 0;
   var headSelectorsArr = [];
@@ -79,7 +83,7 @@ function emailRemoveUnusedCss(str, opts) {
   if (opts.whitelist.length > 0 && !opts.whitelist.every(function (el) {
     return isStr(el);
   })) {
-    throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_04] opts.whitelist array should contain only string-type elements. Currently we\ve got:\n' + JSON.stringify(opts.whitelist, null, 4));
+    throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_04] opts.whitelist array should contain only string-type elements. Currently we\x0Be got:\n' + JSON.stringify(opts.whitelist, null, 4));
   }
 
   //
@@ -103,23 +107,23 @@ function emailRemoveUnusedCss(str, opts) {
   var totalCounter = 0;
   var originalLength = str.length || 1;
   var ignoreTheNextCurlieBecauseItFollowsAtMedia = false;
-  for (var _i = 0, _len = str.length; _i < _len; _i++) {
+  for (i = 0, len = str.length; i < len; i++) {
     if (MAINDEBUG) {
-      console.log('----------------------------------------- str[' + _i + '] = ' + (str[_i].trim() !== '' ? str[_i] : 'space/LR'));
+      console.log('----------------------------------------- str[' + i + '] = ' + (str[i].trim() !== '' ? str[i] : 'space/LR'));
     }
 
     if (MAINDEBUG) {
-      totalCounter++;
+      totalCounter += 1;
     }
-    var chr = str[_i];
+    var chr = str[i];
 
     // pinpoint any <style... tag, anywhere within the given HTML
     // ================
-    if ('' + str[_i] + str[_i + 1] + str[_i + 2] + str[_i + 3] + str[_i + 4] + str[_i + 5] === '<style') {
+    if ('' + str[i] + str[i + 1] + str[i + 2] + str[i + 3] + str[i + 4] + str[i + 5] === '<style') {
       checkingInsideCurlyBraces = true;
-      for (var y = _i; y < _len; y++) {
+      for (var y = i; y < len; y++) {
         if (MAINDEBUG) {
-          totalCounter++;
+          totalCounter += 1;
         }
         if (str[y] === '>') {
           styleStartedAt = y + 1;
@@ -130,14 +134,14 @@ function emailRemoveUnusedCss(str, opts) {
 
     // pinpoint closing style tag, </style>
     // ================
-    if ('' + str[_i] + str[_i + 1] + str[_i + 2] + str[_i + 3] + str[_i + 4] + str[_i + 5] === '/style') {
+    if ('' + str[i] + str[i + 1] + str[i + 2] + str[i + 3] + str[i + 4] + str[i + 5] === '/style') {
       checkingInsideCurlyBraces = false;
-      styleEndedAt = _i - 1;
+      styleEndedAt = i - 1;
     }
 
     // pinpoint @media
     // ================
-    if ('' + str[_i] + str[_i + 1] + str[_i + 2] + str[_i + 3] + str[_i + 4] + str[_i + 5] === '@media') {
+    if ('' + str[i] + str[i + 1] + str[i + 2] + str[i + 3] + str[i + 4] + str[i + 5] === '@media') {
       if (MAINDEBUG) {
         console.log('\n* @media detected');
       }
@@ -163,20 +167,20 @@ function emailRemoveUnusedCss(str, opts) {
 
     // catch opening dot or hash
     // ================
-    if (styleStartedAt && _i >= styleStartedAt && (
+    if (styleStartedAt && i >= styleStartedAt && (
     // (!styleEndedAt || (i > styleEndedAt)) &&
 
     // a) either it's the first style tag and currently we haven't traversed
     // it's closing yet:
-    styleEndedAt === 0 && _i >= styleStartedAt ||
+    styleEndedAt === 0 && i >= styleStartedAt ||
     // b) or, style tag was closed, later another-one was opened and we
     // haven't traversed through its closing tag yet:
-    styleStartedAt > styleEndedAt && styleStartedAt < _i) && (chr === '.' || chr === '#') && _i >= beingCurrentlyAt && !insideCurlyBraces) {
+    styleStartedAt > styleEndedAt && styleStartedAt < i) && (chr === '.' || chr === '#') && i >= beingCurrentlyAt && !insideCurlyBraces) {
       checkingInsideCurlyBraces = true;
-      headSelectorStartedAt = _i;
-      for (var _y = _i; _y < _len; _y++) {
+      headSelectorStartedAt = i;
+      for (var _y = i; _y < len; _y++) {
         if (MAINDEBUG) {
-          totalCounter++;
+          totalCounter += 1;
         }
         if (!characterSuitableForNames(str[_y])) {
           headSelectorsArr.push(str.slice(headSelectorStartedAt, _y));
@@ -187,10 +191,10 @@ function emailRemoveUnusedCss(str, opts) {
     }
 
     // get opening body tag
-    if ('' + str[_i] + str[_i + 1] + str[_i + 2] + str[_i + 3] + str[_i + 4] === '<body') {
-      for (var _y2 = _i; _y2 < _len; _y2++) {
+    if ('' + str[i] + str[i + 1] + str[i + 2] + str[i + 3] + str[i + 4] === '<body') {
+      for (var _y2 = i; _y2 < len; _y2++) {
         if (MAINDEBUG) {
-          totalCounter++;
+          totalCounter += 1;
         }
         if (str[_y2] === '>') {
           bodyStartedAt = _y2 + 1;
@@ -201,53 +205,53 @@ function emailRemoveUnusedCss(str, opts) {
 
     // catch opening of a class attribute
     // ================
-    if (bodyStartedAt !== 0 && '' + str[_i] + str[_i + 1] + str[_i + 2] + str[_i + 3] + str[_i + 4] + str[_i + 5] + str[_i + 6] === 'class="' && (str[_i - 1] === ' ' || str[_i - 1] === '"') // this is to prevent false positives like attribute "superclass=..."
+    if (bodyStartedAt !== 0 && '' + str[i] + str[i + 1] + str[i + 2] + str[i + 3] + str[i + 4] + str[i + 5] + str[i + 6] === 'class="' && (str[i - 1] === ' ' || str[i - 1] === '"') // this is to prevent false positives like attribute "superclass=..."
     ) {
-        bodyClassAttributeStartedAt = _i + 6;
+        bodyClassAttributeStartedAt = i + 6;
       }
 
     // catch opening of an id attribute
     // ================
-    if (bodyStartedAt !== 0 && '' + str[_i] + str[_i + 1] + str[_i + 2] + str[_i + 3] === 'id="' && (str[_i - 1] === ' ' || str[_i - 1] === '"') // this is to prevent false positives like attribute "urlid=..."
+    if (bodyStartedAt !== 0 && '' + str[i] + str[i + 1] + str[i + 2] + str[i + 3] === 'id="' && (str[i - 1] === ' ' || str[i - 1] === '"') // this is to prevent false positives like attribute "urlid=..."
     ) {
-        bodyIdAttributeStartedAt = _i + 3;
+        bodyIdAttributeStartedAt = i + 3;
       }
 
     // stop the class attribute's recording if closing double quote encountered
     // ================
-    if (bodyClassAttributeStartedAt !== 0 && chr === '"' && _i > bodyClassAttributeStartedAt) {
+    if (bodyClassAttributeStartedAt !== 0 && chr === '"' && i > bodyClassAttributeStartedAt) {
       bodyClassAttributeStartedAt = 0;
     }
 
     // stop the id attribute's recording if closing double quote encountered
     // ================
-    if (bodyIdAttributeStartedAt !== 0 && chr === '"' && _i > bodyIdAttributeStartedAt) {
+    if (bodyIdAttributeStartedAt !== 0 && chr === '"' && i > bodyIdAttributeStartedAt) {
       bodyIdAttributeStartedAt = 0;
     }
 
     // catch first letter within each class attribute
     // ================
-    if (bodyClassAttributeStartedAt && _i > bodyClassAttributeStartedAt && characterSuitableForNames(chr) && classStartedAt === 0) {
-      classStartedAt = _i;
+    if (bodyClassAttributeStartedAt && i > bodyClassAttributeStartedAt && characterSuitableForNames(chr) && classStartedAt === 0) {
+      classStartedAt = i;
     }
 
     // catch whole class
     // ================
-    if (classStartedAt !== 0 && _i > classStartedAt && !characterSuitableForNames(chr)) {
-      bodyClassesArr.push('.' + str.slice(classStartedAt, _i));
+    if (classStartedAt !== 0 && i > classStartedAt && !characterSuitableForNames(chr)) {
+      bodyClassesArr.push('.' + str.slice(classStartedAt, i));
       classStartedAt = 0;
     }
 
     // catch first letter within each id attribute
     // ================
-    if (bodyIdAttributeStartedAt && _i > bodyIdAttributeStartedAt && characterSuitableForNames(chr) && idStartedAt === 0) {
-      idStartedAt = _i;
+    if (bodyIdAttributeStartedAt && i > bodyIdAttributeStartedAt && characterSuitableForNames(chr) && idStartedAt === 0) {
+      idStartedAt = i;
     }
 
     // catch whole id
     // ================
-    if (idStartedAt !== 0 && _i > idStartedAt && !characterSuitableForNames(chr)) {
-      bodyIdsArr.push('#' + str.slice(idStartedAt, _i));
+    if (idStartedAt !== 0 && i > idStartedAt && !characterSuitableForNames(chr)) {
+      bodyIdsArr.push('#' + str.slice(idStartedAt, i));
       idStartedAt = 0;
     }
   }
@@ -280,10 +284,10 @@ function emailRemoveUnusedCss(str, opts) {
   // with unused classes and removed as collateral, we need to remove it from body too.
 
   var headSelectorsCount = {};
-  headSelectorsArr.forEach(function (el, i) {
+  headSelectorsArr.forEach(function (el) {
     extract(el).forEach(function (selector) {
-      if (headSelectorsCount.hasOwnProperty(selector)) {
-        headSelectorsCount[selector]++;
+      if (Object.prototype.hasOwnProperty.call(headSelectorsCount, selector)) {
+        headSelectorsCount[selector] += 1;
       } else {
         headSelectorsCount[selector] = 1;
       }
@@ -322,9 +326,9 @@ function emailRemoveUnusedCss(str, opts) {
 
   var preppedHeadSelectorsArr = Array.from(headSelectorsArr);
   var deletedFromHeadArr = [];
-  for (var _y3 = 0, _len2 = preppedHeadSelectorsArr.length; _y3 < _len2; _y3++) {
+  for (var _y3 = 0, len2 = preppedHeadSelectorsArr.length; _y3 < len2; _y3++) {
     if (MAINDEBUG) {
-      totalCounter++;
+      totalCounter += 1;
     }
     // preppedHeadSelectorsArr[y]
     var temp = void 0;
@@ -338,14 +342,14 @@ function emailRemoveUnusedCss(str, opts) {
 
       (_deletedFromHeadArr = deletedFromHeadArr).push.apply(_deletedFromHeadArr, _toConsumableArray(extract(preppedHeadSelectorsArr[_y3])));
       preppedHeadSelectorsArr.splice(_y3, 1);
-      _y3--;
-      _len2--;
+      _y3 -= 1;
+      len2 -= 1;
     }
   }
 
   deletedFromHeadArr = uniq(pullAllWithGlob(deletedFromHeadArr, opts.whitelist));
 
-  var preppedAllClassesAndIdsWithinHead;
+  var preppedAllClassesAndIdsWithinHead = void 0;
   if (preppedHeadSelectorsArr.length > 0) {
     preppedAllClassesAndIdsWithinHead = preppedHeadSelectorsArr.reduce(function (arr, el) {
       return arr.concat(extract(el));
@@ -426,7 +430,7 @@ function emailRemoveUnusedCss(str, opts) {
 
   for (i = 0, len = str.length; i < len; i++) {
     if (MAINDEBUG) {
-      totalCounter++;
+      totalCounter += 1;
     }
 
     var _chr = str[i];
@@ -442,7 +446,7 @@ function emailRemoveUnusedCss(str, opts) {
       }
       for (var _y4 = i; _y4 < len; _y4++) {
         if (MAINDEBUG) {
-          totalCounter++;
+          totalCounter += 1;
         }
         if (str[_y4] === '>') {
           styleStartedAt = _y4 + 1;
@@ -511,7 +515,7 @@ function emailRemoveUnusedCss(str, opts) {
       var markerInnerLeft = null;
       for (var _y5 = i - 1; _y5 > 0; _y5--) {
         if (MAINDEBUG) {
-          totalCounter++;
+          totalCounter += 1;
         }
         if (MAINDEBUG2) {
           console.log('<< str[' + _y5 + ']=' + str[_y5]);
@@ -534,9 +538,6 @@ function emailRemoveUnusedCss(str, opts) {
           markerInnerLeft = null;
         }
       }
-      // if (MAINDEBUG2) { console.log('\n\n\nmarkerOuterLeft:\n>>>>' + str.slice(markerOuterLeft, markerOuterLeft + 15) + '<<<<') }
-      // if (MAINDEBUG2) { console.log('\n') }
-      // if (MAINDEBUG2) { console.log('markerInnerLeft:\n>>>>' + str.slice(markerInnerLeft, markerInnerLeft + 15) + '<<<<\n\n\n') }
 
       // march forward to catch:
       // 3) outer right boundary, up to which we would delete the whole "line".
@@ -551,7 +552,7 @@ function emailRemoveUnusedCss(str, opts) {
           withinCurlie = true;
         }
         if (MAINDEBUG) {
-          totalCounter++;
+          totalCounter += 1;
         }
         if (str[_y6] === '}') {
           withinCurlie = false;
@@ -569,7 +570,7 @@ function emailRemoveUnusedCss(str, opts) {
             newMarkerInnerLeft = _y6;
             for (var z = _y6 + 1; z < len; z++) {
               if (MAINDEBUG) {
-                totalCounter++;
+                totalCounter += 1;
               }
               if (str[z].trim() !== '') {
                 markerInnerRight = z - 1;
@@ -582,8 +583,8 @@ function emailRemoveUnusedCss(str, opts) {
             if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight + 1)), headCssToDelete).length > 0 && markerInnerLeft !== undefined && markerInnerRight + 1 !== undefined) {
               // extract each class and subtract counts from `headSelectorsCountClone`
               extract(str.slice(markerInnerLeft, markerInnerRight + 1)).forEach(function (selector) {
-                if (headSelectorsCountClone.hasOwnProperty(selector)) {
-                  headSelectorsCountClone[selector]--;
+                if (Object.prototype.hasOwnProperty.call(headSelectorsCountClone, selector)) {
+                  headSelectorsCountClone[selector] -= 1;
                 }
               });
               // submit this chunk for deletion
@@ -625,8 +626,8 @@ function emailRemoveUnusedCss(str, opts) {
             if (intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete).length > 0 && markerInnerLeft !== undefined && markerInnerRight !== undefined) {
               // subtract the counters for each class/id:
               extract(str.slice(markerInnerLeft, markerInnerRight)).forEach(function (selector) {
-                if (headSelectorsCountClone.hasOwnProperty(selector)) {
-                  headSelectorsCountClone[selector]--;
+                if (Object.prototype.hasOwnProperty.call(headSelectorsCountClone, selector)) {
+                  headSelectorsCountClone[selector] -= 1;
                 }
               });
               // submit this chunk for deletion later
@@ -654,7 +655,7 @@ function emailRemoveUnusedCss(str, opts) {
       // deletion of the whole "line":
       if (canDeleteWholeRow && markerOuterLeft !== undefined && markerOuterRight !== undefined) {
         if (MAINDEBUG2) {
-          console.log('row 535: ABOUT TO PUSH FOR THE WHOLE THING:' + ('[' + markerOuterLeft + ', ' + markerOuterRight + ']'));
+          console.log('row 535: ABOUT TO PUSH FOR THE WHOLE THING: [' + markerOuterLeft + ', ' + markerOuterRight + ']');
         }
         finalIndexesToDelete.add(markerOuterLeft, markerOuterRight);
       }
@@ -674,8 +675,7 @@ function emailRemoveUnusedCss(str, opts) {
   }) // filter out all classes
   .map(function (val) {
     return val.slice(1);
-  }) // remove dots from them
-  ));
+  }))); // remove dots from them
   // update `bodyCssToDelete` too, it's used in reporting
   bodyCssToDelete = uniq(bodyCssToDelete.concat(bodyClassesToDelete.map(function (val) {
     return '.' + val;
@@ -705,7 +705,7 @@ function emailRemoveUnusedCss(str, opts) {
   // ================
   for (i = str.indexOf('<body'), len = str.length; i < len; i++) {
     if (MAINDEBUG) {
-      totalCounter++;
+      totalCounter += 1;
     }
 
     //
@@ -717,7 +717,7 @@ function emailRemoveUnusedCss(str, opts) {
         classStartedAt = i + 7;
         for (var _y7 = i + 7; _y7 < len; _y7++) {
           if (MAINDEBUG) {
-            totalCounter++;
+            totalCounter += 1;
           }
           if (str[_y7] === '"') {
             classEndedAt = _y7;
@@ -741,7 +741,7 @@ function emailRemoveUnusedCss(str, opts) {
           // ================
           for (var _y8 = i - 1; _y8 > 0; _y8--) {
             if (MAINDEBUG) {
-              totalCounter++;
+              totalCounter += 1;
             }
             if (str[_y8] !== ' ') {
               deleteFrom = _y8 + 1;
@@ -762,7 +762,7 @@ function emailRemoveUnusedCss(str, opts) {
         idStartedAt = i + 4;
         for (var _y9 = i + 4; _y9 < len; _y9++) {
           if (MAINDEBUG) {
-            totalCounter++;
+            totalCounter += 1;
           }
           if (str[_y9] === '"') {
             idEndedAt = _y9;
@@ -786,7 +786,7 @@ function emailRemoveUnusedCss(str, opts) {
         // ================
         for (var _y10 = i - 1; _y10 > 0; _y10--) {
           if (MAINDEBUG) {
-            totalCounter++;
+            totalCounter += 1;
           }
           if (str[_y10] !== ' ') {
             _deleteFrom = _y10 + 1;

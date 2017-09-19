@@ -1,109 +1,111 @@
-'use strict'
+/* eslint no-param-reassign: 0, no-console: 0 */
 
 const pullAll = require('lodash.pullall')
 const uniq = require('lodash.uniq')
 const intersection = require('lodash.intersection')
 const extract = require('string-extract-class-names')
 const isObj = require('lodash.isplainobject')
-const isArr = Array.isArray
-const pullAllWithGlob = require('array-pull-all-with-glob/es5')
-const replaceSlicesArr = require('string-replace-slices-array/es5')
-const Slices = require('string-slices-array-push/es5')
+const pullAllWithGlob = require('array-pull-all-with-glob')
+const replaceSlicesArr = require('string-replace-slices-array')
+const Slices = require('string-slices-array-push')
 
-function emailRemoveUnusedCss (str, opts) {
-  function characterSuitableForNames (char) {
+const isArr = Array.isArray
+
+function emailRemoveUnusedCss(str, opts) {
+  function characterSuitableForNames(char) {
     return /[.#\-_A-Za-z0-9]/.test(char)
   }
-  function existy (x) { return x != null }
-  function isStr (something) { return typeof something === 'string' }
-  var MAINDEBUG = 0
-  var MAINDEBUG2 = 0
-  var i, len
-  var styleStartedAt = 0
-  var styleEndedAt = 0
-  var headSelectorsArr = []
-  var bodyClassesArr = []
-  var bodyIdsArr = []
+  function existy(x) { return x != null }
+  function isStr(something) { return typeof something === 'string' }
+  const MAINDEBUG = 0
+  const MAINDEBUG2 = 0
+  let i
+  let len
+  let styleStartedAt = 0
+  let styleEndedAt = 0
+  const headSelectorsArr = []
+  const bodyClassesArr = []
+  const bodyIdsArr = []
 
-  var headSelectorStartedAt = 0
-  var bodyClassAttributeStartedAt = 0
-  var bodyIdAttributeStartedAt = 0
-  var bodyStartedAt = 0
+  let headSelectorStartedAt = 0
+  let bodyClassAttributeStartedAt = 0
+  let bodyIdAttributeStartedAt = 0
+  let bodyStartedAt = 0
 
-  var classStartedAt = 0
-  var classEndedAt = 0
-  var idStartedAt = 0
-  var idEndedAt = 0
+  let classStartedAt = 0
+  let classEndedAt = 0
+  let idStartedAt = 0
+  let idEndedAt = 0
 
-  var beingCurrentlyAt = 0
-  var checkingInsideCurlyBraces = false
-  var insideCurlyBraces = false
+  let beingCurrentlyAt = 0
+  let checkingInsideCurlyBraces = false
+  let insideCurlyBraces = false
 
-  var regexEmptyStyleTag = /[\n]?\s*<style[^>]*>\s*<\/style\s*>/g
-  var regexEmptyMediaQuery = /[\n]?\s*@media[^{]*{\s*}/g
+  const regexEmptyStyleTag = /[\n]?\s*<style[^>]*>\s*<\/style\s*>/g
+  const regexEmptyMediaQuery = /[\n]?\s*@media[^{]*{\s*}/g
 
-  var finalIndexesToDelete = new Slices()
+  const finalIndexesToDelete = new Slices()
 
   // insurance
   if (typeof str !== 'string') {
-    throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_01] Input must be string! Currently it\'s ' + typeof str)
+    throw new TypeError(`email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_01] Input must be string! Currently it's ${typeof str}`)
   }
   if (!isObj(opts)) {
     if (opts === undefined || opts === null) {
       opts = {}
     } else {
-      throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_02] Options, second input argument, must be a plain object! Currently it\'s ' + typeof opts + ', equal to: ' + JSON.stringify(opts, null, 4))
+      throw new TypeError(`email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_02] Options, second input argument, must be a plain object! Currently it's ${typeof opts}, equal to: ${JSON.stringify(opts, null, 4)}`)
     }
   }
 
   // checking opts
-  var defaults = {
-    whitelist: []
+  const defaults = {
+    whitelist: [],
   }
   opts = Object.assign(defaults, opts)
   if (isStr(opts.whitelist)) {
     opts.whitelist = [opts.whitelist]
   }
   if (!isArr(opts.whitelist)) {
-    throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_03] opts.whitelist should be an array, but it was customised to a wrong thing, ' + JSON.stringify(opts.whitelist, null, 4))
+    throw new TypeError(`email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_03] opts.whitelist should be an array, but it was customised to a wrong thing, ${JSON.stringify(opts.whitelist, null, 4)}`)
   }
   if ((opts.whitelist.length > 0) && (!opts.whitelist.every(el => isStr(el)))) {
-    throw new TypeError('email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_04] opts.whitelist array should contain only string-type elements. Currently we\ve got:\n' + JSON.stringify(opts.whitelist, null, 4))
+    throw new TypeError(`email-remove-unused-css/emailRemoveUnusedCss(): [THROW_ID_04] opts.whitelist array should contain only string-type elements. Currently we\ve got:\n${JSON.stringify(opts.whitelist, null, 4)}`)
   }
 
-//
-//                       .----------------.
-//                      | .--------------. |
-//                      | |     __       | |
-//                      | |    /  |      | |
-//                      | |    `| |      | |
-//                      | |     | |      | |
-//                      | |    _| |_     | |
-//                      | |   |_____|    | |
-//                      | |              | |
-//                      | '--------------' |
-//                       '----------------'
-//
-// in this round we traverse the whole string, looking for two things:
-// 1. any style tags (which can be even within <body>) and
-// 2. and "class=" or "id=" attributes
-// we compile all of 1) findings into zz; and all of 2) findings into yy
+  //
+  //                       .----------------.
+  //                      | .--------------. |
+  //                      | |     __       | |
+  //                      | |    /  |      | |
+  //                      | |    `| |      | |
+  //                      | |     | |      | |
+  //                      | |    _| |_     | |
+  //                      | |   |_____|    | |
+  //                      | |              | |
+  //                      | '--------------' |
+  //                       '----------------'
+  //
+  // in this round we traverse the whole string, looking for two things:
+  // 1. any style tags (which can be even within <body>) and
+  // 2. and "class=" or "id=" attributes
+  // we compile all of 1) findings into zz; and all of 2) findings into yy
 
-  var totalCounter = 0
-  var originalLength = str.length || 1
+  let totalCounter = 0
+  const originalLength = str.length || 1
   let ignoreTheNextCurlieBecauseItFollowsAtMedia = false
-  for (let i = 0, len = str.length; i < len; i++) {
+  for (i = 0, len = str.length; i < len; i++) {
     if (MAINDEBUG) { console.log(`----------------------------------------- str[${i}] = ${(str[i].trim() !== '') ? str[i] : 'space/LR'}`) }
 
-    if (MAINDEBUG) { totalCounter++ }
-    let chr = str[i]
+    if (MAINDEBUG) { totalCounter += 1 }
+    const chr = str[i]
 
     // pinpoint any <style... tag, anywhere within the given HTML
     // ================
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '<style') {
       checkingInsideCurlyBraces = true
       for (let y = i; y < len; y++) {
-        if (MAINDEBUG) { totalCounter++ }
+        if (MAINDEBUG) { totalCounter += 1 }
         if (str[y] === '>') {
           styleStartedAt = y + 1
           break
@@ -163,7 +165,7 @@ function emailRemoveUnusedCss (str, opts) {
       checkingInsideCurlyBraces = true
       headSelectorStartedAt = i
       for (let y = i; y < len; y++) {
-        if (MAINDEBUG) { totalCounter++ }
+        if (MAINDEBUG) { totalCounter += 1 }
         if (!characterSuitableForNames(str[y])) {
           headSelectorsArr.push(str.slice(headSelectorStartedAt, y))
           beingCurrentlyAt = y
@@ -175,7 +177,7 @@ function emailRemoveUnusedCss (str, opts) {
     // get opening body tag
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}` === '<body') {
       for (let y = i; y < len; y++) {
-        if (MAINDEBUG) { totalCounter++ }
+        if (MAINDEBUG) { totalCounter += 1 }
         if (str[y] === '>') {
           bodyStartedAt = y + 1
           break
@@ -262,13 +264,13 @@ function emailRemoveUnusedCss (str, opts) {
 
   //         F R U I T S   O F   T H E   L A B O U R
 
-  let allClassesAndIdsWithinBody = bodyClassesArr.concat(bodyIdsArr)
+  const allClassesAndIdsWithinBody = bodyClassesArr.concat(bodyIdsArr)
 
-  if (MAINDEBUG) { console.log('headSelectorsArr = ' + JSON.stringify(headSelectorsArr, null, 4)) }
-  if (MAINDEBUG) { console.log('bodyClassesArr = ' + JSON.stringify(bodyClassesArr, null, 4)) }
-  if (MAINDEBUG) { console.log('bodyIdsArr = ' + JSON.stringify(bodyIdsArr, null, 4)) }
-  if (MAINDEBUG) { console.log('allClassesAndIdsWithinBody = ' + JSON.stringify(allClassesAndIdsWithinBody, null, 4)) }
-  if (MAINDEBUG) { console.log('\nopts.whitelist = ' + JSON.stringify(opts.whitelist, null, 4)) }
+  if (MAINDEBUG) { console.log(`headSelectorsArr = ${JSON.stringify(headSelectorsArr, null, 4)}`) }
+  if (MAINDEBUG) { console.log(`bodyClassesArr = ${JSON.stringify(bodyClassesArr, null, 4)}`) }
+  if (MAINDEBUG) { console.log(`bodyIdsArr = ${JSON.stringify(bodyIdsArr, null, 4)}`) }
+  if (MAINDEBUG) { console.log(`allClassesAndIdsWithinBody = ${JSON.stringify(allClassesAndIdsWithinBody, null, 4)}`) }
+  if (MAINDEBUG) { console.log(`\nopts.whitelist = ${JSON.stringify(opts.whitelist, null, 4)}`) }
 
   // extract all classes or id's from `headSelectorsArr` and get count of each.
   // That's so we can later exclude sandwitched classes. Each time "collateral"
@@ -277,20 +279,20 @@ function emailRemoveUnusedCss (str, opts) {
   // If it turns out that a class was in both head and body, but it was sandwitched
   // with unused classes and removed as collateral, we need to remove it from body too.
 
-  var headSelectorsCount = {}
-  headSelectorsArr.forEach(function (el, i) {
-    extract(el).forEach(function (selector) {
-      if (headSelectorsCount.hasOwnProperty(selector)) {
-        headSelectorsCount[selector]++
+  const headSelectorsCount = {}
+  headSelectorsArr.forEach((el) => {
+    extract(el).forEach((selector) => {
+      if (Object.prototype.hasOwnProperty.call(headSelectorsCount, selector)) {
+        headSelectorsCount[selector] += 1
       } else {
         headSelectorsCount[selector] = 1
       }
     })
   })
-  if (MAINDEBUG) { console.log('\n* headSelectorsCount = ' + JSON.stringify(headSelectorsCount, null, 4)) }
+  if (MAINDEBUG) { console.log(`\n* headSelectorsCount = ${JSON.stringify(headSelectorsCount, null, 4)}`) }
   // create a working copy of `headSelectorsCount` which we'll mutate, subtracting
   // each deleted class/id:
-  var headSelectorsCountClone = Object.assign({}, headSelectorsCount)
+  const headSelectorsCountClone = Object.assign({}, headSelectorsCount)
 
   //
   //               A F T E R   T R A V E R S A L
@@ -299,8 +301,9 @@ function emailRemoveUnusedCss (str, opts) {
   // compile list of to-be-terminated
   // ================
 
-  var allClassesAndIdsWithinHead = uniq(headSelectorsArr.reduce((arr, el) => arr.concat(extract(el)), []))
-  if (MAINDEBUG) { console.log('allClassesAndIdsWithinHead = ' + JSON.stringify(allClassesAndIdsWithinHead, null, 4)) }
+  const allClassesAndIdsWithinHead = uniq(headSelectorsArr
+    .reduce((arr, el) => arr.concat(extract(el)), []))
+  if (MAINDEBUG) { console.log(`allClassesAndIdsWithinHead = ${JSON.stringify(allClassesAndIdsWithinHead, null, 4)}`) }
 
   // to avoid false positives, let's apply two cycles when removing unused classes/id's from head:
 
@@ -312,10 +315,10 @@ function emailRemoveUnusedCss (str, opts) {
   // potentially sandwitched lumps from head. Let's see what's left afterwards.
   // ================
 
-  let preppedHeadSelectorsArr = Array.from(headSelectorsArr)
+  const preppedHeadSelectorsArr = Array.from(headSelectorsArr)
   let deletedFromHeadArr = []
-  for (let y = 0, len = preppedHeadSelectorsArr.length; y < len; y++) {
-    if (MAINDEBUG) { totalCounter++ }
+  for (let y = 0, len2 = preppedHeadSelectorsArr.length; y < len2; y++) {
+    if (MAINDEBUG) { totalCounter += 1 }
     // preppedHeadSelectorsArr[y]
     let temp
     if (existy(preppedHeadSelectorsArr[y])) {
@@ -324,20 +327,24 @@ function emailRemoveUnusedCss (str, opts) {
     if (!temp.every(el => allClassesAndIdsWithinBody.includes(el))) {
       deletedFromHeadArr.push(...extract(preppedHeadSelectorsArr[y]))
       preppedHeadSelectorsArr.splice(y, 1)
-      y--
-      len--
+      y -= 1
+      len2 -= 1
     }
   }
 
   deletedFromHeadArr = uniq(pullAllWithGlob(deletedFromHeadArr, opts.whitelist))
 
-  var preppedAllClassesAndIdsWithinHead
+  let preppedAllClassesAndIdsWithinHead
   if (preppedHeadSelectorsArr.length > 0) {
-    preppedAllClassesAndIdsWithinHead = preppedHeadSelectorsArr.reduce((arr, el) => arr.concat(extract(el)), [])
+    preppedAllClassesAndIdsWithinHead = preppedHeadSelectorsArr
+      .reduce(
+        (arr, el) => arr.concat(extract(el)),
+        [],
+      )
   } else {
     preppedAllClassesAndIdsWithinHead = []
   }
-  if (MAINDEBUG) { console.log('\n* preppedAllClassesAndIdsWithinHead = ' + JSON.stringify(preppedAllClassesAndIdsWithinHead, null, 4)) }
+  if (MAINDEBUG) { console.log(`\n* preppedAllClassesAndIdsWithinHead = ${JSON.stringify(preppedAllClassesAndIdsWithinHead, null, 4)}`) }
 
   // cycle #2 - now treat remaining lumps as definite sources of
   // "what classes or id's are present in the head"
@@ -345,39 +352,49 @@ function emailRemoveUnusedCss (str, opts) {
   // against the body classes/id's.
   // ================
 
-  let headCssToDelete = pullAllWithGlob(pullAll(uniq(Array.from(allClassesAndIdsWithinHead)), bodyClassesArr.concat(bodyIdsArr)), opts.whitelist)
-  if (MAINDEBUG) { console.log('\n* OLD headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
+  let headCssToDelete = pullAllWithGlob(
+    pullAll(
+      uniq(Array.from(allClassesAndIdsWithinHead)),
+      bodyClassesArr.concat(bodyIdsArr),
+    ),
+    opts.whitelist,
+  )
+  if (MAINDEBUG) { console.log(`\n* OLD headCssToDelete = ${JSON.stringify(headCssToDelete, null, 4)}`) }
 
-  let bodyCssToDelete = uniq(pullAllWithGlob(pullAll(bodyClassesArr.concat(bodyIdsArr), preppedAllClassesAndIdsWithinHead), opts.whitelist))
-  if (MAINDEBUG) { console.log('* bodyCssToDelete = ' + JSON.stringify(bodyCssToDelete, null, 4)) }
+  let bodyCssToDelete = uniq(pullAllWithGlob(pullAll(
+    bodyClassesArr.concat(bodyIdsArr),
+    preppedAllClassesAndIdsWithinHead,
+  ), opts.whitelist))
+  if (MAINDEBUG) { console.log(`* bodyCssToDelete = ${JSON.stringify(bodyCssToDelete, null, 4)}`) }
 
   // now that we know final to-be-deleted selectors list, compare them with `deletedFromHeadArr`
   // and fill any missing CSS in `headCssToDelete`:
-  headCssToDelete = uniq(headCssToDelete.concat(intersection(deletedFromHeadArr, bodyCssToDelete))).sort()
-  if (MAINDEBUG) { console.log('\n* NEW headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
+  headCssToDelete = uniq(headCssToDelete
+    .concat(intersection(deletedFromHeadArr, bodyCssToDelete))).sort()
+  if (MAINDEBUG) { console.log(`\n* NEW headCssToDelete = ${JSON.stringify(headCssToDelete, null, 4)}`) }
 
   let bodyClassesToDelete = bodyCssToDelete.filter(s => s.startsWith('.')).map(s => s.slice(1))
-  if (MAINDEBUG) { console.log('bodyClassesToDelete = ' + JSON.stringify(bodyClassesToDelete, null, 4)) }
-  let bodyIdsToDelete = bodyCssToDelete.filter(s => s.startsWith('#')).map(s => s.slice(1))
-  if (MAINDEBUG) { console.log('bodyIdsToDelete = ' + JSON.stringify(bodyIdsToDelete, null, 4)) }
+  if (MAINDEBUG) { console.log(`bodyClassesToDelete = ${JSON.stringify(bodyClassesToDelete, null, 4)}`) }
+  const bodyIdsToDelete = bodyCssToDelete.filter(s => s.startsWith('#')).map(s => s.slice(1))
+  if (MAINDEBUG) { console.log(`bodyIdsToDelete = ${JSON.stringify(bodyIdsToDelete, null, 4)}`) }
 
-//
-//                       .----------------.
-//                      | .--------------. |
-//                      | |    _____     | |
-//                      | |   / ___ `.   | |
-//                      | |  |_/___) |   | |
-//                      | |   .'____.'   | |
-//                      | |  / /_____    | |
-//                      | |  |_______|   | |
-//                      | |              | |
-//                      | '--------------' |
-//                       '----------------'
-//
+  //
+  //                       .----------------.
+  //                      | .--------------. |
+  //                      | |    _____     | |
+  //                      | |   / ___ `.   | |
+  //                      | |  |_/___) |   | |
+  //                      | |   .'____.'   | |
+  //                      | |  / /_____    | |
+  //                      | |  |_______|   | |
+  //                      | |              | |
+  //                      | '--------------' |
+  //                       '----------------'
+  //
 
-//
-//             T H E   S E C O N D   T R A V E R S A L
-//
+  //
+  //             T H E   S E C O N D   T R A V E R S A L
+  //
 
   // remove the unused head styles
   // ================
@@ -389,9 +406,9 @@ function emailRemoveUnusedCss (str, opts) {
   ignoreTheNextCurlieBecauseItFollowsAtMedia = false
 
   for (i = 0, len = str.length; i < len; i++) {
-    if (MAINDEBUG) { totalCounter++ }
+    if (MAINDEBUG) { totalCounter += 1 }
 
-    let chr = str[i]
+    const chr = str[i]
     if (MAINDEBUG2) { console.log(`---2---          str[${i}] = ${(str[i].trim() !== '') ? str[i] : 'space/LR'}`) }
 
     // pinpoint any <style... tag, anywhere within the given HTML
@@ -399,7 +416,7 @@ function emailRemoveUnusedCss (str, opts) {
     if (`${str[i]}${str[i + 1]}${str[i + 2]}${str[i + 3]}${str[i + 4]}${str[i + 5]}` === '<style') {
       if (MAINDEBUG2) { console.log('\n* style tag begins') }
       for (let y = i; y < len; y++) {
-        if (MAINDEBUG) { totalCounter++ }
+        if (MAINDEBUG) { totalCounter += 1 }
         if (str[y] === '>') {
           styleStartedAt = y + 1
           break
@@ -436,7 +453,7 @@ function emailRemoveUnusedCss (str, opts) {
       withinCurlies = false
     }
 
-    if (MAINDEBUG2) { console.log('\n *   withinCurlies = ' + withinCurlies) }
+    if (MAINDEBUG2) { console.log(`\n *   withinCurlies = ${withinCurlies}`) }
 
     let firstSelectorFound = false
     // prep the head
@@ -465,8 +482,8 @@ function emailRemoveUnusedCss (str, opts) {
       let markerOuterLeft
       let markerInnerLeft = null
       for (let y = i - 1; y > 0; y--) {
-        if (MAINDEBUG) { totalCounter++ }
-        if (MAINDEBUG2) { console.log(`<< str[${y}]=` + str[y]) }
+        if (MAINDEBUG) { totalCounter += 1 }
+        if (MAINDEBUG2) { console.log(`<< str[${y}]=${str[y]}`) }
         // part 1):
         if ((str[y] === '>') || (str[y] === '{') || (str[y] === '}')) {
           markerOuterLeft = y + 1
@@ -485,9 +502,6 @@ function emailRemoveUnusedCss (str, opts) {
           markerInnerLeft = null
         }
       }
-      // if (MAINDEBUG2) { console.log('\n\n\nmarkerOuterLeft:\n>>>>' + str.slice(markerOuterLeft, markerOuterLeft + 15) + '<<<<') }
-      // if (MAINDEBUG2) { console.log('\n') }
-      // if (MAINDEBUG2) { console.log('markerInnerLeft:\n>>>>' + str.slice(markerInnerLeft, markerInnerLeft + 15) + '<<<<\n\n\n') }
 
       // march forward to catch:
       // 3) outer right boundary, up to which we would delete the whole "line".
@@ -501,7 +515,7 @@ function emailRemoveUnusedCss (str, opts) {
         if (str[y] === '{') {
           withinCurlie = true
         }
-        if (MAINDEBUG) { totalCounter++ }
+        if (MAINDEBUG) { totalCounter += 1 }
         if (str[y] === '}') {
           withinCurlie = false
           markerOuterRight = y + 1
@@ -520,22 +534,25 @@ function emailRemoveUnusedCss (str, opts) {
             // we need to catch the following white space as well because it's the first piece:
             newMarkerInnerLeft = y
             for (let z = y + 1; z < len; z++) {
-              if (MAINDEBUG) { totalCounter++ }
+              if (MAINDEBUG) { totalCounter += 1 }
               if (str[z].trim() !== '') {
                 markerInnerRight = z - 1
                 break
               }
             }
-            if (MAINDEBUG2) { console.log('\n1selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight + 1) + '<<<<') }
+            if (MAINDEBUG2) { console.log(`\n1selector:\n>>>>${str.slice(markerInnerLeft, markerInnerRight + 1)}<<<<`) }
             if (
-              (intersection(extract(str.slice(markerInnerLeft, markerInnerRight + 1)), headCssToDelete).length > 0) &&
+              (intersection(
+                extract(str.slice(markerInnerLeft, markerInnerRight + 1)),
+                headCssToDelete,
+              ).length > 0) &&
               (markerInnerLeft !== undefined) &&
               ((markerInnerRight + 1) !== undefined)
             ) {
               // extract each class and subtract counts from `headSelectorsCountClone`
-              extract(str.slice(markerInnerLeft, markerInnerRight + 1)).forEach(function (selector) {
-                if (headSelectorsCountClone.hasOwnProperty(selector)) {
-                  headSelectorsCountClone[selector]--
+              extract(str.slice(markerInnerLeft, markerInnerRight + 1)).forEach((selector) => {
+                if (Object.prototype.hasOwnProperty.call(headSelectorsCountClone, selector)) {
+                  headSelectorsCountClone[selector] -= 1
                 }
               })
               // submit this chunk for deletion
@@ -558,21 +575,24 @@ function emailRemoveUnusedCss (str, opts) {
                 }
               }
             }
-            if (MAINDEBUG2) { console.log('\n2selector:\n>>>>' + str.slice(markerInnerLeft, markerInnerRight) + '<<<<') }
-            if (MAINDEBUG2) { console.log('\n\n\n\n\n* str.slice(markerInnerLeft, markerInnerRight) = ' + JSON.stringify(str.slice(markerInnerLeft, markerInnerRight), null, 4)) }
-            if (MAINDEBUG2) { console.log('* extract(str.slice(markerInnerLeft, markerInnerRight)) = ' + JSON.stringify(extract(str.slice(markerInnerLeft, markerInnerRight)), null, 4)) }
-            if (MAINDEBUG2) { console.log('* headCssToDelete = ' + JSON.stringify(headCssToDelete, null, 4)) }
-            if (MAINDEBUG2) { console.log('* intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete) = ' + JSON.stringify(intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete), null, 4)) }
+            if (MAINDEBUG2) { console.log(`\n2selector:\n>>>>${str.slice(markerInnerLeft, markerInnerRight)}<<<<`) }
+            if (MAINDEBUG2) { console.log(`\n\n\n\n\n* str.slice(markerInnerLeft, markerInnerRight) = ${JSON.stringify(str.slice(markerInnerLeft, markerInnerRight), null, 4)}`) }
+            if (MAINDEBUG2) { console.log(`* extract(str.slice(markerInnerLeft, markerInnerRight)) = ${JSON.stringify(extract(str.slice(markerInnerLeft, markerInnerRight)), null, 4)}`) }
+            if (MAINDEBUG2) { console.log(`* headCssToDelete = ${JSON.stringify(headCssToDelete, null, 4)}`) }
+            if (MAINDEBUG2) { console.log(`* intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete) = ${JSON.stringify(intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete), null, 4)}`) }
 
             if (
-              (intersection(extract(str.slice(markerInnerLeft, markerInnerRight)), headCssToDelete).length > 0) &&
+              (intersection(
+                extract(str.slice(markerInnerLeft, markerInnerRight)),
+                headCssToDelete,
+              ).length > 0) &&
               (markerInnerLeft !== undefined) &&
               (markerInnerRight !== undefined)
             ) {
               // subtract the counters for each class/id:
-              extract(str.slice(markerInnerLeft, markerInnerRight)).forEach(function (selector) {
-                if (headSelectorsCountClone.hasOwnProperty(selector)) {
-                  headSelectorsCountClone[selector]--
+              extract(str.slice(markerInnerLeft, markerInnerRight)).forEach((selector) => {
+                if (Object.prototype.hasOwnProperty.call(headSelectorsCountClone, selector)) {
+                  headSelectorsCountClone[selector] -= 1
                 }
               })
               // submit this chunk for deletion later
@@ -594,8 +614,12 @@ function emailRemoveUnusedCss (str, opts) {
         }
       }
       // deletion of the whole "line":
-      if (canDeleteWholeRow && (markerOuterLeft !== undefined) && (markerOuterRight !== undefined)) {
-        if (MAINDEBUG2) { console.log('row 535: ABOUT TO PUSH FOR THE WHOLE THING:' + `[${markerOuterLeft}, ${markerOuterRight}]`) }
+      if (
+        canDeleteWholeRow &&
+        (markerOuterLeft !== undefined) &&
+        (markerOuterRight !== undefined)
+      ) {
+        if (MAINDEBUG2) { console.log(`row 535: ABOUT TO PUSH FOR THE WHOLE THING: [${markerOuterLeft}, ${markerOuterRight}]`) }
         finalIndexesToDelete.add(markerOuterLeft, markerOuterRight)
       }
       // console.log('\nmarkerOuter:\n>>>>' + str.slice(markerOuterLeft, markerOuterRight) + '<<<<')
@@ -603,42 +627,44 @@ function emailRemoveUnusedCss (str, opts) {
     }
   }
 
-  var allClassesAndIdsThatWereCompletelyDeletedFromHead = Object.keys(headSelectorsCountClone).filter(singleSelector => (headSelectorsCountClone[singleSelector] === 0))
+  const allClassesAndIdsThatWereCompletelyDeletedFromHead = Object
+    .keys(headSelectorsCountClone)
+    .filter(singleSelector => (headSelectorsCountClone[singleSelector] === 0))
 
   // at this point, if any classes in `headSelectorsCountClone` have zero counters
   // that means those have all been deleted from head.
-  bodyClassesToDelete = uniq(bodyClassesToDelete.concat(
-    intersection(pullAllWithGlob(allClassesAndIdsWithinBody, opts.whitelist), allClassesAndIdsThatWereCompletelyDeletedFromHead)
+  bodyClassesToDelete = uniq(bodyClassesToDelete
+    .concat(intersection(
+      pullAllWithGlob(allClassesAndIdsWithinBody, opts.whitelist),
+      allClassesAndIdsThatWereCompletelyDeletedFromHead,
+    )
       .filter(val => (val[0] === '.')) // filter out all classes
-      .map(val => val.slice(1)) // remove dots from them
-  ))
+      .map(val => val.slice(1)))) // remove dots from them
   // update `bodyCssToDelete` too, it's used in reporting
-  bodyCssToDelete = uniq(bodyCssToDelete.concat(
-    bodyClassesToDelete.map(val => '.' + val)
-  )).sort()
+  bodyCssToDelete = uniq(bodyCssToDelete.concat(bodyClassesToDelete.map(val => `.${val}`))).sort()
 
-  if (MAINDEBUG) { console.log('\n\n* BEFORE STEP #3 - bodyClassesToDelete = ' + JSON.stringify(bodyClassesToDelete, null, 4)) }
+  if (MAINDEBUG) { console.log(`\n\n* BEFORE STEP #3 - bodyClassesToDelete = ${JSON.stringify(bodyClassesToDelete, null, 4)}`) }
 
-//                       .----------------.
-//                      | .--------------. |
-//                      | |    ______    | |
-//                      | |   / ____ `.  | |
-//                      | |   `'  __) |  | |
-//                      | |   _  |__ '.  | |
-//                      | |  | \____) |  | |
-//                      | |   \______.'  | |
-//                      | |              | |
-//                      | '--------------' |
-//                       '----------------'
+  //                       .----------------.
+  //                      | .--------------. |
+  //                      | |    ______    | |
+  //                      | |   / ____ `.  | |
+  //                      | |   `'  __) |  | |
+  //                      | |   _  |__ '.  | |
+  //                      | |  | \____) |  | |
+  //                      | |   \______.'  | |
+  //                      | |              | |
+  //                      | '--------------' |
+  //                       '----------------'
 
-//
-//             T H E   T H I R D   T R A V E R S A L
-//
+  //
+  //             T H E   T H I R D   T R A V E R S A L
+  //
 
   // removing unused classes & id's from body
   // ================
   for (i = str.indexOf('<body'), len = str.length; i < len; i++) {
-    if (MAINDEBUG) { totalCounter++ }
+    if (MAINDEBUG) { totalCounter += 1 }
 
     //
     // 1. identify and remove unused classes from body:
@@ -650,7 +676,7 @@ function emailRemoveUnusedCss (str, opts) {
       let deleteFrom
       classStartedAt = i + 7
       for (let y = i + 7; y < len; y++) {
-        if (MAINDEBUG) { totalCounter++ }
+        if (MAINDEBUG) { totalCounter += 1 }
         if (str[y] === '"') {
           classEndedAt = y
           break
@@ -658,11 +684,11 @@ function emailRemoveUnusedCss (str, opts) {
       }
       // console.log('CLASS: >>>>' + str.slice(classStartedAt, classEndedAt) + '<<<<')
 
-      let extractedClassArr = pullAll(str.slice(classStartedAt, classEndedAt).split(' '), ['']).map(el => el.trim())
+      const extractedClassArr = pullAll(str.slice(classStartedAt, classEndedAt).split(' '), ['']).map(el => el.trim())
 
       let whatsLeft = pullAll(Array.from(extractedClassArr), bodyClassesToDelete)
       if (whatsLeft.length > 0) {
-        whatsLeft = ' class="' + whatsLeft.join(' ') + '"'
+        whatsLeft = ` class="${whatsLeft.join(' ')}"`
       } else {
         whatsLeft = ''
       }
@@ -670,7 +696,7 @@ function emailRemoveUnusedCss (str, opts) {
         // traverse backwards to catch any multiple spaces:
         // ================
         for (let y = i - 1; y > 0; y--) {
-          if (MAINDEBUG) { totalCounter++ }
+          if (MAINDEBUG) { totalCounter += 1 }
           if (str[y] !== ' ') {
             deleteFrom = y + 1
             break
@@ -691,7 +717,7 @@ function emailRemoveUnusedCss (str, opts) {
       let deleteFrom
       idStartedAt = i + 4
       for (let y = i + 4; y < len; y++) {
-        if (MAINDEBUG) { totalCounter++ }
+        if (MAINDEBUG) { totalCounter += 1 }
         if (str[y] === '"') {
           idEndedAt = y
           break
@@ -699,11 +725,11 @@ function emailRemoveUnusedCss (str, opts) {
       }
       // console.log('ID: >>>>' + str.slice(idStartedAt, idEndedAt) + '<<<<')
 
-      let extractedIdsArr = pullAll(str.slice(idStartedAt, idEndedAt).split(' '), ['']).map(el => el.trim())
+      const extractedIdsArr = pullAll(str.slice(idStartedAt, idEndedAt).split(' '), ['']).map(el => el.trim())
 
       let whatsLeft = pullAll(Array.from(extractedIdsArr), bodyIdsToDelete)
       if (whatsLeft.length > 0) {
-        whatsLeft = ' id="' + whatsLeft.join(' ') + '"'
+        whatsLeft = ` id="${whatsLeft.join(' ')}"`
       } else {
         whatsLeft = ''
       }
@@ -711,7 +737,7 @@ function emailRemoveUnusedCss (str, opts) {
       // traverse backwards to catch any multiple spaces:
       // ================
       for (let y = i - 1; y > 0; y--) {
-        if (MAINDEBUG) { totalCounter++ }
+        if (MAINDEBUG) { totalCounter += 1 }
         if (str[y] !== ' ') {
           deleteFrom = y + 1
           break
@@ -725,12 +751,12 @@ function emailRemoveUnusedCss (str, opts) {
   // ==========================
 
   if (existy(finalIndexesToDelete.current())) {
-    if (MAINDEBUG) { console.log('\n\n\n---------\nfinalIndexesToDelete = ' + JSON.stringify(finalIndexesToDelete, null, 4)) }
+    if (MAINDEBUG) { console.log(`\n\n\n---------\nfinalIndexesToDelete = ${JSON.stringify(finalIndexesToDelete, null, 4)}`) }
     str = replaceSlicesArr(str, finalIndexesToDelete.current())
   }
 
-  if (MAINDEBUG) { console.log('totalCounter so far: ' + totalCounter) }
-  if (MAINDEBUG) { console.log('==========\nwe traversed ' + totalCounter / originalLength + ' times more characters than the total input char count.\n==========') }
+  if (MAINDEBUG) { console.log(`totalCounter so far: ${totalCounter}`) }
+  if (MAINDEBUG) { console.log(`==========\nwe traversed ${totalCounter / originalLength} times more characters than the total input char count.\n==========`) }
 
   // final fixing:
   // ================
@@ -740,18 +766,16 @@ function emailRemoveUnusedCss (str, opts) {
   }
   str = str.replace(regexEmptyStyleTag, '\n')
   str = str.replace('\u000A\n', '\n')
-  str = str.replace('\n\n', '\n').trim() + '\n'
+  str = `${str.replace('\n\n', '\n').trim()}\n`
 
   return {
     result: str,
     allInHead: allClassesAndIdsWithinHead.sort(),
     allInBody: allClassesAndIdsWithinBody.sort(),
     // deletedFromHead: uniq(deletedFromHeadArr.concat(headCssToDelete)).sort(),
-    deletedFromHead: uniq(
-      Object.keys(headSelectorsCountClone)
-        .filter(singleSelector => (headSelectorsCountClone[singleSelector] === 0))
-    ).sort(),
-    deletedFromBody: bodyCssToDelete.sort()
+    deletedFromHead: uniq(Object.keys(headSelectorsCountClone)
+      .filter(singleSelector => (headSelectorsCountClone[singleSelector] === 0))).sort(),
+    deletedFromBody: bodyCssToDelete.sort(),
   }
 }
 
