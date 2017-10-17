@@ -2,6 +2,20 @@
   "name": "email-remove-unused-css",
   "version": "2.9.0",
   "description": "Remove unused CSS from email templates",
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "repository": "codsen/email-remove-unused-css",
+  "bugs": {
+    "url": "https://github.com/codsen/email-remove-unused-css/issues"
+  },
+  "homepage": "https://github.com/codsen/email-remove-unused-css",
+  "author": {
+    "email": "roy@codsen.com",
+    "name": "Roy Revelt",
+    "url": "https://github.com/revelt"
+  },
   "main": "index-es5.js",
   "scripts": {
     "build": "babel index.js --presets babel-preset-es2015 --out-file index-es5.js",
@@ -10,7 +24,9 @@
     "prepare": "npm run build",
     "test": "clear && ./node_modules/.bin/eslint index.js test.js && nyc --reporter=html --reporter=text ava && npm run build"
   },
-  "repository": "codsen/email-remove-unused-css",
+  "ava": {
+    "verbose": true
+  },
   "keywords": [
     "email",
     "remove",
@@ -23,16 +39,6 @@
     "inline",
     "from"
   ],
-  "author": {
-    "name": "Roy Revelt",
-    "email": "roy@codsen.com",
-    "url": "https://github.com/revelt"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/codsen/email-remove-unused-css/issues"
-  },
-  "homepage": "https://github.com/codsen/email-remove-unused-css",
   "dependencies": {
     "array-pull-all-with-glob": "^3.1.0",
     "lodash.intersection": "*",
@@ -41,7 +47,7 @@
     "lodash.uniq": "*",
     "string-extract-class-names": "^3.4.0",
     "string-replace-slices-array": "^1.4.0",
-    "string-slices-array-push": "^1.5.2"
+    "string-slices-array-push": "^1.6.0"
   },
   "devDependencies": {
     "ava": "*",
@@ -49,16 +55,10 @@
     "babel-preset-es2015": "^6.24.1",
     "clear-cli": "*",
     "coveralls": "*",
-    "eslint": "^4.7.1",
-    "eslint-config-airbnb-base": "^12.0.0",
+    "eslint": "^4.9.0",
+    "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.7.0",
     "husky": "*",
     "nyc": "*"
-  },
-  "ava": {
-    "verbose": true
-  },
-  "engines": {
-    "node": ">=0.10.0"
   }
 }

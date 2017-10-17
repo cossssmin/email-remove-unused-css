@@ -30,6 +30,7 @@
   - [API - Input - Options object](#api---input---options-object)
   - [API - Output](#api---output)
 - [Input options.whitelist](#input-optionswhitelist)
+- [Tapping the stream in Gulp](#tapping-the-stream-in-gulp)
 - [Removing unused CSS from web pages & competition](#removing-unused-css-from-web-pages--competition)
 - [Contributing](#contributing)
 - [Licence](#licence)
@@ -133,6 +134,28 @@ emailRemoveUnusedCss(html,
   }
 )
 // => all class names that begin with ".module-" will not be touched by this library.
+```
+
+## Tapping the stream in Gulp
+
+In Gulp, everything flows as a vinyl Buffer streams. You could [tap](https://github.com/geejs/gulp-tap) the stream, convert it to `string`, perform the operations (like remove unused CSS), then convert it back to Buffer and place the stream back. I wanted to come up with a visual analogy example using waste pipes but thought I'd rather won't.
+
+Code-wise, here's the idea:
+
+```js
+const tap = require('gulp-tap')
+const removeUnused = require('email-remove-unused-css')
+const util = require('gulp-util')
+const whitelist = ['.External*', '.ReadMsgBody', '.yshortcuts', '.Mso*', '#outlook', '.module*']
+
+gulp.task('build', () => {
+  return gulp.src('emails/*.html')
+    .pipe(tap((file) => {
+      const cleanedHtmlResult = removeUnused(file.contents.toString(), { whitelist })
+      util.log(util.colors.green(`\nremoved ${cleanedHtmlResult.deletedFromHead.length} from head: ${cleanedHtmlResult.deletedFromHead.join(' ')}`))
+      util.log(util.colors.green(`\nremoved ${cleanedHtmlResult.deletedFromBody.length} from body: ${cleanedHtmlResult.deletedFromBody.join(' ')}`))
+      file.contents = Buffer.from(cleanedHtmlResult.result)
+}))
 ```
 
 ## Removing unused CSS from web pages & competition
